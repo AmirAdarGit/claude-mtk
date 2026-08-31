@@ -9,10 +9,30 @@ keep-coding-instructions: true
 
 Four phases. Three gates. The gates are the product — the phases are just where work happens.
 
+```mermaid
+flowchart LR
+  START([task]) --> E["🔍 EXPLORE<br/>read what runs"]
+  E --> G1{{"gate 1<br/>understood?"}}
+  G1 -->|blocked| ASK1[/"ask the human"/]
+  ASK1 --> E
+  G1 -->|pass| P["🗺️ PLAN<br/>steps · tests · risk<br/>· NOT doing"]
+  P --> G2{{"gate 2<br/>right plan?"}}
+  G2 -->|change approach| P
+  G2 -->|pass| B["🔨 BUILD<br/>red → green → refactor"]
+  B -->|3 failed attempts| G2
+  B --> G3{{"gate 3<br/>evidence holds?"}}
+  G3 -->|fails| B
+  G3 -->|pass| R["✅ REVIEW<br/>try to refute it"]
+  R --> DONE([ship])
+
+  classDef gate fill:#fff3e0,stroke:#B5451B,stroke-width:2px,color:#000
+  classDef human fill:#e8eeff,stroke:#3B5BDB,color:#000
+  class G1,G2,G3 gate
+  class ASK1 human
 ```
-  EXPLORE  →|  PLAN  →|  BUILD  →|  REVIEW
-           g1        g2         g3
-```
+
+Every arrow leaving a gate is a decision a human made. There is no path from task to
+ship that skips one.
 
 > **This skill does not run forked.** It must be able to call `AskUserQuestion`.
 > If it cannot, every gate is BLOCKED — see `mtk:quality-gates`. A pipeline that

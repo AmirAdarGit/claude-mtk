@@ -75,6 +75,25 @@ BUILD never edits your folder. It gets a disposable copy on its own branch.
 Removing the folder is not removing the work -- the branch keeps the commits,
 and `new` with the same slug brings the folder back. All local; no network.
 
+## Observability (optional, off-able)
+
+`scripts/event.sh` posts phase and gate events to a local server, so a run shows
+up as a timeline next to the Claude Code hook events. `verify.sh` and
+`worktree.sh` call it themselves.
+
+```bash
+./scripts/obs.sh status     # on/off, size, event count
+./scripts/obs.sh stats      # runs, gates, verify history, tool use
+./scripts/obs.sh prune 30   # delete anything older than 30 days
+./scripts/obs.sh off        # stop recording
+```
+
+Roughly 3.5 KB per event, measured. Nothing reads this log automatically -- not
+Claude, not the agents. It is worth keeping only while `stats` is being read.
+`off` is the honest choice otherwise.
+
+Server: https://github.com/disler/claude-code-hooks-multi-agent-observability
+
 ## Dependencies
 
 None.

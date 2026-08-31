@@ -42,6 +42,33 @@ ship that skips one.
 > If it cannot, every gate is BLOCKED — see `mtk:quality-gates`. A pipeline that
 > cannot ask is a pipeline that will claim it asked.
 
+## Logging — one line at each boundary
+
+At the very start of a run, name it once:
+
+```bash
+export MTK_RUN="<slug>-$(date +%H%M%S)"
+```
+
+Then emit an event at each boundary. `scripts/event.sh` never fails and never
+blocks for more than 2 seconds, so a missing or stopped server costs nothing:
+
+```bash
+S="${CLAUDE_SKILL_DIR}/../../scripts/event.sh"
+"$S" phase_start phase=EXPLORE
+"$S" gate_ask   gate=1 question="..."      # right before you call AskUserQuestion
+"$S" gate_answer gate=1 answer="..."       # right after they reply
+"$S" phase_end  phase=EXPLORE
+"$S" agent_start agent=tdd-implementer     # before dispatching one
+"$S" run_end    outcome=merged
+```
+
+`verify.sh` and `worktree.sh` log themselves — do not log for them.
+
+This is the only part of the pipeline that depends on you remembering. A skipped
+event costs nothing except a gap in the record, so never let logging interrupt
+the work or become a reason to pause.
+
 ## Rules that hold across all four phases
 
 0. **BUILD happens in a worktree, never in the user's folder.** See Phase 3 step 0.

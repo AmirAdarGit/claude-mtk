@@ -41,6 +41,11 @@ fi
 REPO_NAME=$(basename "$REPO_ROOT")
 PARENT=$(dirname "$REPO_ROOT")
 
+# Report to the observability server if one is listening. Never fails, never
+# blocks more than 2s.
+EVENT="$(cd "$(dirname "$0")" && pwd)/event.sh"
+emit() { [ -x "$EVENT" ] && "$EVENT" "$@" >/dev/null 2>&1 || true; }
+
 slugify() {  # keep it a safe folder and branch name
   printf '%s' "$1" | tr '[:upper:]' '[:lower:]' \
     | sed -e 's/[^a-z0-9._-]\{1,\}/-/g' -e 's/^-*//' -e 's/-*$//' | cut -c1-40
@@ -80,6 +85,7 @@ case "$CMD" in
     # remember where it came from, so `diff` knows what to compare against
     git config "mtk.worktree.$SLUG.base" "$BASE"
 
+    emit worktree_new slug="$SLUG" branch="$BRANCH" base="$BASE" path="$PATH_"
     note "created $BRANCH from $BASE"
     note "your working folder $REPO_ROOT was not touched"
     printf '%s\n' "$PATH_"          # stdout is the path, and only the path
@@ -129,6 +135,7 @@ case "$CMD" in
 
     [ -L "$P/node_modules" ] && rm -f "$P/node_modules"   # our symlink, not their files
     git worktree remove --force "$P" >&2 || die "git worktree remove failed" 3
+    emit worktree_drop slug="$SLUG" branch="$BRANCH" purge="$PURGE"
     note "folder removed: $P"
 
     if [ "$PURGE" -eq 1 ]; then

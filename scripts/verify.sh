@@ -20,6 +20,12 @@
 
 set -uo pipefail   # deliberately NOT -e: one failing check must not stop the rest
 
+# Resolve this BEFORE any `cd`. $0 is often relative ("./scripts/verify.sh"), so
+# resolving it after cd-ing into --dir silently yields a path that does not
+# exist, and every emit below becomes a no-op that looks like it worked.
+EVENT="$(cd "$(dirname "$0")" && pwd)/event.sh"
+emit() { [ -x "$EVENT" ] && "$EVENT" "$@" >/dev/null 2>&1 || true; }
+
 FORMAT=text
 ONLY=""
 STREAK=1
@@ -38,6 +44,7 @@ while [ $# -gt 0 ]; do
 done
 
 cd "$DIR" 2>/dev/null || { echo "verify.sh: cannot enter $DIR" >&2; exit 3; }
+emit verify_start dir="$DIR" only="${ONLY:-all}" streak="$STREAK"
 
 # ── results, kept as parallel arrays ─────────────────────────────────────────
 NAMES=(); CMDS=(); CODES=(); SECS=(); NOTES=()
@@ -175,6 +182,11 @@ LEVEL="all clear"; EXIT=0
 for c in "${CODES[@]}"; do [ "$c" -ne 0 ] && { LEVEL="failures"; EXIT=2; }; done
 if [ "$EXIT" -eq 0 ] && [ "${LINT_WARNINGS:-0}" != 0 ]; then LEVEL="warnings only"; EXIT=1; fi
 [ "${#NAMES[@]}" -eq 0 ] && { LEVEL="blocked"; EXIT=3; }
+
+# grep -c prints its count AND exits 1 when that count is zero, so `|| echo 0`
+# appends a second line and yields "0\n0". Count with awk, which cannot do that.
+RULE_COUNT=$(printf '%s' "$RULES" | awk 'NF && $1!="TOTALS"{n++} END{print n+0}')
+emit verify_done level="$LEVEL" exit="$EXIT" checks="${#NAMES[@]}" rules="$RULE_COUNT"
 
 # ── report ───────────────────────────────────────────────────────────────────
 if [ "$FORMAT" = json ]; then

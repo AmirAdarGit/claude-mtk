@@ -11,7 +11,26 @@ Run the project's checks and report what actually happened. Standalone, or the l
 
 > **Note — not forked.** This skill deliberately runs in the main conversation. Evidence you cannot see is evidence you cannot check.
 
-## Step 1 — detect the stack
+## Step 0 — run the script. Do not hand-run the checks.
+
+```bash
+"${CLAUDE_SKILL_DIR}/../../scripts/verify.sh" --json          # this repo
+"${CLAUDE_SKILL_DIR}/../../scripts/verify.sh" --dir PATH --json
+```
+
+Flags: `--only tests|lint|typecheck`, `--streak N`, `--json`, `--dir PATH`.
+Exit codes: `0` all clear · `1` warnings only · `2` failures · `3` blocked.
+
+The script detects the stack, runs each check independently, times them, and
+counts lint findings per rule. **Its exit code is the verdict.** You do not get
+to disagree with it, summarise around it, or report a level it did not produce.
+
+*Why a script and not instructions: an instruction can be skipped and the skip
+can be narrated as a pass. An exit code cannot. Everything below describes what
+the script does and how to read it — hand-run a check only if the script is
+unavailable, and say so plainly when you do.*
+
+## Step 1 — what it detects
 
 Look for config files. Do not assume; detect.
 
@@ -61,8 +80,16 @@ Per check: the exact command, exit code, duration, pass/fail counts, and the fir
 
 ### Split failures by severity — always
 
-"33 errors" is a number, not information. Before reporting **Failures**, group the
-findings **by rule** and sort each rule into one of two buckets:
+"33 errors" is a number, not information. The script hands you a **count per rule**;
+it deliberately does not judge which rules matter, because a script cannot know
+whether 23 hits of one rule are 23 bugs or 23 correct idioms. That judgement is
+yours, and it costs a read.
+
+**Before calling any rule blocking, open at least one site and read it.** Classifying
+by rule name alone is how a hydration pattern that must be written that way gets
+reported as a cascading-render bug.
+
+Sort each rule into one of two buckets:
 
 | Bucket | Contains | What to tell the user |
 |---|---|---|
@@ -135,6 +162,11 @@ exception, and only for the lint auto-fix it names.
 
 Violating the letter of these is violating the spirit of them.
 
+**IRON LAW: THE SCRIPT'S EXIT CODE IS THE VERDICT.**
+Never report a level the script did not produce. If you did not run
+`scripts/verify.sh`, you have no verdict to report — say that instead of
+inventing one.
+
 **IRON LAW: NEVER REPORT A CHECK AS PASSING WITHOUT ACTUALLY RUNNING IT.**
 
 **IRON LAW: NEVER SUPPRESS OR SUMMARIZE AWAY FAILING OUTPUT.**
@@ -147,6 +179,8 @@ Violating the letter of these is violating the spirit of them.
 | "That test is probably just flaky" | Stop. Re-run it, or use `--streak=N`. One failure is a failure. |
 | "Lint warnings don't matter" | Stop. Warnings are evidence. Report them; let the human weigh them. |
 | "I already know this code is correct" | Stop. Verification exists because **confidence is not evidence**. |
+| "23 hits of one rule, that's 23 bugs" | Stop. Open one and read it. It may be 23 correct idioms. |
+| "I'll just run the commands myself, same thing" | It is not the same thing. The script's exit code is checkable; your narration is not. |
 
 ### Rationalizations, answered
 

@@ -5,6 +5,18 @@ A development pipeline with gates that actually stop and ask.
 Forked down from [claude-forge/etk](https://github.com/ArieGoldkin/claude-forge)
 (27 skills / 5 agents / 21 commands) to something one person can read in a sitting.
 
+## Two lanes
+
+Pick by size. Small and you already know how -> chore. Anything else -> develop.
+
+```
+/mtk:chore     small job    do it -> verify -> show diff
+/mtk:develop   real work    explore -> plan -> build -> review, with gates
+```
+
+If you are unsure which, use `develop`. Two minutes of questions beats an
+afternoon of the wrong thing.
+
 ## The pipeline
 
 ```

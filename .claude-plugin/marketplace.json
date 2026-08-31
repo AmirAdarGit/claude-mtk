@@ -1,0 +1,14 @@
+{
+  "name": "mtk-local",
+  "owner": {
+    "name": "Amir",
+    "email": "AmirAdarGit@users.noreply.github.com"
+  },
+  "plugins": [
+    {
+      "name": "mtk",
+      "source": "./",
+      "description": "My toolkit — 4-phase pipeline with gates that actually stop and ask."
+    }
+  ]
+}

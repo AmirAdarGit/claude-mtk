@@ -22,7 +22,7 @@ run in a forked context, because a gate that cannot ask a question is not a gate
 | 1 | scaffold + manifest | done |
 | 2 | `verify` skill | done |
 | 3 | `quality-gates` skill | done |
-| 4 | `development-pipeline` — 4 phases | todo |
+| 4 | `development-pipeline` — 4 phases | done |
 | 5 | agents: tdd-implementer, quality-reviewer, adversarial-verifier | todo |
 | 6 | remaining commands | todo |
 | 7 | use it on real work, fix what annoys | todo |

@@ -49,6 +49,20 @@ The script reports facts (which checks ran, exit codes, counts per lint rule).
 It does not decide which findings matter -- that needs reading the code, and
 belongs to the skill.
 
+## worktree.sh
+
+BUILD never edits your folder. It gets a disposable copy on its own branch.
+
+```bash
+./scripts/worktree.sh new  fix-lint    # -> ../<repo>-mtk-fix-lint on branch mtk/fix-lint
+./scripts/worktree.sh diff fix-lint    # what changed, vs where it came from
+./scripts/worktree.sh drop fix-lint    # folder gone, branch + commits kept
+./scripts/worktree.sh drop fix-lint --purge   # both gone
+```
+
+Removing the folder is not removing the work -- the branch keeps the commits,
+and `new` with the same slug brings the folder back. All local; no network.
+
 ## Dependencies
 
 None.

@@ -18,17 +18,21 @@ flowchart LR
   G1 -->|pass| P["🗺️ PLAN<br/>steps · tests · risk<br/>· NOT doing"]
   P --> G2{{"gate 2<br/>right plan?"}}
   G2 -->|change approach| P
-  G2 -->|pass| B["🔨 BUILD<br/>red → green → refactor"]
+  G2 -->|pass| WT["worktree<br/>disposable copy"]
+  WT --> B["🔨 BUILD<br/>red → green → refactor"]
   B -->|3 failed attempts| G2
   B --> G3{{"gate 3<br/>evidence holds?"}}
   G3 -->|fails| B
   G3 -->|pass| R["✅ REVIEW<br/>try to refute it"]
-  R --> DONE([ship])
+  R --> CH{{"merge · keep ·<br/>leave · discard"}}
+  CH --> DONE([ship])
 
   classDef gate fill:#fff3e0,stroke:#B5451B,stroke-width:2px,color:#000
   classDef human fill:#e8eeff,stroke:#3B5BDB,color:#000
-  class G1,G2,G3 gate
+  class G1,G2,G3,CH gate
   class ASK1 human
+  classDef box fill:#f3eefc,stroke:#6B3FA0,color:#000
+  class WT box
 ```
 
 Every arrow leaving a gate is a decision a human made. There is no path from task to
@@ -40,6 +44,7 @@ ship that skips one.
 
 ## Rules that hold across all four phases
 
+0. **BUILD happens in a worktree, never in the user's folder.** See Phase 3 step 0.
 1. **Never skip forward.** No writing code during EXPLORE, no exploring during BUILD. If you find yourself needing to, that is a signal the previous gate was passed too early — go back through it.
 2. **Every gate emits the block from `mtk:quality-gates`, then calls `AskUserQuestion`, then waits.** No exceptions, no "this one is obvious".
 3. **State assumptions out loud, always.** An assumption nobody heard is a decision you made on the user's behalf without telling them.
@@ -102,6 +107,23 @@ Present the plan and ask. Offer the real options: proceed / change the approach 
 
 **Goal:** make the plan real, one checkable piece at a time.
 
+### Step 0 — get a worktree before touching a single file
+
+```bash
+WT=$("${CLAUDE_SKILL_DIR}/../../scripts/worktree.sh" new <slug>)
+cd "$WT"
+```
+
+Everything in this phase happens in `$WT`. The user's working folder is not yours
+to edit. Say the path out loud once, so they know where the work is.
+
+- Pick a `<slug>` from the task — `fix-lint`, `add-export`. Short, lowercase.
+- **If the repo is not a git repo**, the script exits 2. Do not fall back to editing
+  in place — stop, say so, and ask.
+- **If the task is a single trivial edit** the user asked for directly in their own
+  folder, ask before making a worktree. Isolation is for work you are running, not
+  for a one-line change they are watching.
+
 For each step in the plan:
 
 1. **Write the failing test first.** Run it. Watch it fail. A test that has never failed proves nothing.
@@ -118,12 +140,26 @@ Rules:
 
 ### Gate 3 — does the evidence hold?
 
-Run `mtk:verify`. Present:
+Run `mtk:verify` **inside the worktree** (`--dir "$WT"`). Present:
+
 - the real check output (blocking vs noise, per that skill)
+- the diff: `scripts/worktree.sh diff <slug>`
 - which plan steps are done, which are not
 - anything you put on the "noticed but didn't do" list
 
-Then ask.
+Then ask, and offer these four — they are the real options, not a formality:
+
+| Choice | What happens |
+|---|---|
+| **merge** | `git merge mtk/<slug>` into their branch, then `worktree.sh drop <slug> --purge` |
+| **keep for later** | `worktree.sh drop <slug>` — folder gone, branch and commits stay |
+| **leave it open** | change nothing; they will look at `$WT` themselves |
+| **throw it away** | `worktree.sh drop <slug> --purge` — folder and branch both gone |
+
+**Never merge without being told to**, and never purge a branch the user has not
+seen the diff of. Deleting a folder is cheap; deleting the only copy of the work
+is not — those are different actions and the flags that do them are different
+on purpose.
 
 ---
 

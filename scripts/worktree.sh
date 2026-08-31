@@ -8,7 +8,8 @@
 # folder is not the same as deleting the work.
 #
 # Usage:
-#   worktree.sh new  <slug>            create ../<repo>-mtk-<slug> on branch mtk/<slug>
+#   worktree.sh new  <slug> [--no-link] create ../<repo>-mtk-<slug> on branch mtk/<slug>
+#                                      and symlink node_modules from the main folder
 #   worktree.sh path <slug>            print its path (nothing else, for scripting)
 #   worktree.sh diff <slug>            what changed there, vs the branch it came from
 #   worktree.sh list                   every mtk worktree of this repo
@@ -27,7 +28,16 @@ note() { echo "worktree.sh: $*" >&2; }
 
 git rev-parse --git-dir >/dev/null 2>&1 || die "not inside a git repository" 2
 
-REPO_ROOT=$(git rev-parse --show-toplevel)
+# Resolve the MAIN working folder, not whichever worktree we are standing in.
+# --git-common-dir points at the main repo's .git for every linked worktree, so
+# its parent is the main root. Without this, running any command from inside a
+# worktree computes paths against that worktree and finds nothing.
+COMMON=$(git rev-parse --path-format=absolute --git-common-dir 2>/dev/null || true)
+if [ -n "${COMMON:-}" ] && [ "$(basename "$COMMON")" = ".git" ]; then
+  REPO_ROOT=$(dirname "$COMMON")
+else
+  REPO_ROOT=$(git rev-parse --show-toplevel)
+fi
 REPO_NAME=$(basename "$REPO_ROOT")
 PARENT=$(dirname "$REPO_ROOT")
 
@@ -42,7 +52,8 @@ wt_branch() { printf 'mtk/%s' "$1"; }
 case "$CMD" in
 
   new)
-    RAW="${1:-}"; [ -n "$RAW" ] || die "usage: worktree.sh new <slug>"
+    RAW="${1:-}"; [ -n "$RAW" ] || die "usage: worktree.sh new <slug> [--no-link]"
+    LINK=1; [ "${2:-}" = "--no-link" ] && LINK=0
     SLUG=$(slugify "$RAW"); [ -n "$SLUG" ] || die "slug '$RAW' reduces to nothing"
     PATH_="$(wt_path "$SLUG")"; BRANCH="$(wt_branch "$SLUG")"
 
@@ -56,6 +67,14 @@ case "$CMD" in
       git worktree add "$PATH_" "$BRANCH" >&2 || die "git worktree add failed" 3
     else
       git worktree add "$PATH_" -b "$BRANCH" >&2 || die "git worktree add failed" 3
+    fi
+
+    # A worktree checks out tracked files only, so anything gitignored -- most of
+    # all node_modules -- is simply absent, and every check fails for a reason
+    # that has nothing to do with the code. Link it rather than reinstalling.
+    if [ "$LINK" -eq 1 ] && [ -d "$REPO_ROOT/node_modules" ] && [ ! -e "$PATH_/node_modules" ]; then
+      ln -s "$REPO_ROOT/node_modules" "$PATH_/node_modules" \
+        && note "linked node_modules from the main folder"
     fi
 
     # remember where it came from, so `diff` knows what to compare against
@@ -108,6 +127,7 @@ case "$CMD" in
       note "WARNING: $P has uncommitted changes; they will be lost"
     fi
 
+    [ -L "$P/node_modules" ] && rm -f "$P/node_modules"   # our symlink, not their files
     git worktree remove --force "$P" >&2 || die "git worktree remove failed" 3
     note "folder removed: $P"
 

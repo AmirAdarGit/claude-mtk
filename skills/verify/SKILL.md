@@ -59,6 +59,37 @@ Per check: the exact command, exit code, duration, pass/fail counts, and the fir
 | **Failures** | one or more checks failed | fix before proceeding |
 | **Blocked** | checks cannot run (deps missing, build broken) | clear the blocker first |
 
+### Split failures by severity — always
+
+"33 errors" is a number, not information. Before reporting **Failures**, group the
+findings **by rule** and sort each rule into one of two buckets:
+
+| Bucket | Contains | What to tell the user |
+|---|---|---|
+| **blocking** | anything that can change behaviour at runtime — bad state updates, race conditions, unhandled errors, wrong equality, missing awaits, security rules | fix before commit |
+| **noise** | anything purely cosmetic or dead — unescaped entities, unused vars, import order, formatting | can ride along |
+
+Report it like this:
+
+```
+**Quality Level**: Failures
+  ├─ blocking (21) — setState-in-effect ×20, prefer-spread ×1
+  └─ noise    (12) — no-unescaped-entities ×7, no-unused-vars ×5
+**Recommendation**: fix the 21. the 12 can ride.
+```
+
+Rules to follow when splitting:
+
+- **Group by rule name first**, then count. Twenty instances of one rule is one
+  problem, not twenty — say so.
+- **Name the files**, or at least the shared directory. "Concentrated in
+  `src/app/platform/*`" is more useful than a list of 40 line numbers.
+- **When unsure which bucket a rule belongs in, call it blocking.** Wrongly
+  labelling a real bug as noise is the expensive mistake; the reverse just
+  costs a minute.
+- A codebase with many accumulated lint errors means nothing has been gating on
+  them. Worth saying out loud once — it is the finding, not the individual errors.
+
 ## Step 5 — report
 
 ```
@@ -66,15 +97,26 @@ Per check: the exact command, exit code, duration, pass/fail counts, and the fir
 
 | Check     | Status | Duration | Details             |
 |-----------|--------|----------|---------------------|
-| Tests     | PASS   | 12.4s    | 24 passed, 0 failed |
-| Typecheck | PASS   | 3.2s     | no errors           |
-| Lint      | WARN   | 1.1s     | 0 errors, 3 warnings|
+| Tests     | PASS   | 4s       | 268 passed, 0 failed|
+| Typecheck | PASS   | 5s       | no errors           |
+| Lint      | FAIL   | 15s      | 33 errors, 7 warnings|
 
-**Quality Level**: Warnings only
-**Recommendation**: read the 3 warnings, then safe to commit.
+**Quality Level**: Failures
+  ├─ blocking (21) — setState-in-effect ×20, prefer-spread ×1
+  └─ noise    (12) — no-unescaped-entities ×7, no-unused-vars ×5
+
+Concentrated in `src/app/platform/*`.
+**Recommendation**: fix the 21. the 12 can ride.
 ```
 
 If anything failed, show the real error output and suggest a fix.
+
+## Read-only by default
+
+`verify` **reports**. It does not repair. Never edit a file, run `--fix`, or
+touch git state unless the user asked for it in this turn — running the tool on
+a repo is not permission to change that repo. `/mtk:verify --fix` is the only
+exception, and only for the lint auto-fix it names.
 
 ## Options
 

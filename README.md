@@ -68,6 +68,20 @@ The script reports facts (which checks ran, exit codes, counts per lint rule).
 It does not decide which findings matter -- that needs reading the code, and
 belongs to the skill.
 
+## What is in hooks/
+
+Three scripts, three different jobs, wired in two different places.
+
+| Script | Job | Wired in | Scope |
+|---|---|---|---|
+| `send.sh` | records lifecycle events | `hooks/hooks.json` | whole plugin |
+| `no-writes.sh` | denies writing Bash commands | `agents/*.md` | 2 reviewer agents |
+| `strikes.sh` | denies a command that keeps failing | `agents/*.md` | all 3 agents |
+
+Only `send.sh` is in `hooks.json`. The other two are per-agent on purpose: a plugin-wide
+write block would stop `tdd-implementer` doing its job, and a plugin-wide strike counter
+would apply to your own commands as well as the agents'.
+
 ## Read-only agents are actually read-only
 
 `quality-reviewer` and `adversarial-verifier` both hold `Bash`, because they need it to run

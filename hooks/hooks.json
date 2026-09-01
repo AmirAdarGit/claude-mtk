@@ -1,14 +1,107 @@
 {
-  "description": "mtk observability — records lifecycle events to a local server. OFF unless ~/.mtk/obs-on exists (created by `mtk/scripts/obs.sh on`). Nothing is sent off your machine.",
+  "description": "mtk observability. Records lifecycle events by POSTing to the server named in MTK_OBS_URL, which defaults to http://localhost:4000/events -- so nothing leaves the machine unless you point it elsewhere. OFF unless ~/.mtk/obs-on exists, which only `mtk/scripts/obs.sh on` creates. These are mtk's PLUGIN-WIDE hooks and they cover send.sh only. The other two scripts in this folder are wired per-agent in agents/*.md, not here: no-writes.sh denies Bash commands that write for the two read-only reviewer agents, and strikes.sh denies a command that has already failed three times with the same result.",
   "hooks": {
-    "SessionStart":    [{ "hooks": [{ "type": "command", "command": "sh ${CLAUDE_PLUGIN_ROOT}/hooks/send.sh SessionStart",    "timeout": 3 }] }],
-    "SessionEnd":      [{ "hooks": [{ "type": "command", "command": "sh ${CLAUDE_PLUGIN_ROOT}/hooks/send.sh SessionEnd",      "timeout": 3 }] }],
-    "UserPromptSubmit":[{ "hooks": [{ "type": "command", "command": "sh ${CLAUDE_PLUGIN_ROOT}/hooks/send.sh UserPromptSubmit","timeout": 3 }] }],
-    "PreToolUse":      [{ "matcher": "", "hooks": [{ "type": "command", "command": "sh ${CLAUDE_PLUGIN_ROOT}/hooks/send.sh PreToolUse",  "timeout": 3 }] }],
-    "PostToolUse":     [{ "matcher": "", "hooks": [{ "type": "command", "command": "sh ${CLAUDE_PLUGIN_ROOT}/hooks/send.sh PostToolUse", "timeout": 3 }] }],
-    "PostToolUseFailure":[{ "matcher": "", "hooks": [{ "type": "command", "command": "sh ${CLAUDE_PLUGIN_ROOT}/hooks/send.sh PostToolUseFailure", "timeout": 3 }] }],
-    "SubagentStart":   [{ "hooks": [{ "type": "command", "command": "sh ${CLAUDE_PLUGIN_ROOT}/hooks/send.sh SubagentStart",   "timeout": 3 }] }],
-    "SubagentStop":    [{ "hooks": [{ "type": "command", "command": "sh ${CLAUDE_PLUGIN_ROOT}/hooks/send.sh SubagentStop",    "timeout": 3 }] }],
-    "Stop":            [{ "hooks": [{ "type": "command", "command": "sh ${CLAUDE_PLUGIN_ROOT}/hooks/send.sh Stop",            "timeout": 3 }] }]
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh ${CLAUDE_PLUGIN_ROOT}/hooks/send.sh SessionStart",
+            "timeout": 3
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh ${CLAUDE_PLUGIN_ROOT}/hooks/send.sh SessionEnd",
+            "timeout": 3
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh ${CLAUDE_PLUGIN_ROOT}/hooks/send.sh UserPromptSubmit",
+            "timeout": 3
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh ${CLAUDE_PLUGIN_ROOT}/hooks/send.sh PreToolUse",
+            "timeout": 3
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh ${CLAUDE_PLUGIN_ROOT}/hooks/send.sh PostToolUse",
+            "timeout": 3
+          }
+        ]
+      }
+    ],
+    "PostToolUseFailure": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh ${CLAUDE_PLUGIN_ROOT}/hooks/send.sh PostToolUseFailure",
+            "timeout": 3
+          }
+        ]
+      }
+    ],
+    "SubagentStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh ${CLAUDE_PLUGIN_ROOT}/hooks/send.sh SubagentStart",
+            "timeout": 3
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh ${CLAUDE_PLUGIN_ROOT}/hooks/send.sh SubagentStop",
+            "timeout": 3
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh ${CLAUDE_PLUGIN_ROOT}/hooks/send.sh Stop",
+            "timeout": 3
+          }
+        ]
+      }
+    ]
   }
 }

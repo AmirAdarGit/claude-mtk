@@ -68,6 +68,23 @@ The script reports facts (which checks ran, exit codes, counts per lint rule).
 It does not decide which findings matter -- that needs reading the code, and
 belongs to the skill.
 
+## Read-only agents are actually read-only
+
+`quality-reviewer` and `adversarial-verifier` both hold `Bash`, because they need it to run
+tests, lint, and `git diff`. `disallowedTools: [Write, Edit]` blocks tools by NAME, and Bash
+is not named Write -- so `echo x > file` wrote anyway. The label was documentation, not
+enforcement.
+
+`hooks/no-writes.sh` is the enforcement: a `PreToolUse` hook on those two agents that reads
+`tool_input.command` and denies redirects, `rm`, `mv`, `cp`, `sed -i`, `tee`, `chmod`,
+`git checkout/reset/clean/commit/push`, and package installs. Everything else runs.
+
+It is a deny-list, which is a fence and not a vault: `python3 -c "open('f','w')..."` has no
+`>` and gets through. An allow-list would be airtight and would break the agents the first
+time they needed a command nobody listed. This side of the trade-off keeps them working.
+
+`tdd-implementer` has no such hook -- writing is its job.
+
 ## worktree.sh
 
 BUILD never edits your folder. It gets a disposable copy on its own branch.

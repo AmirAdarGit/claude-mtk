@@ -15,6 +15,21 @@ hooks:
         - type: command
           command: "${CLAUDE_PLUGIN_ROOT}/hooks/no-writes.sh"
           timeout: 5
+        - type: command
+          command: "${CLAUDE_PLUGIN_ROOT}/hooks/strikes.sh check"
+          timeout: 5
+  PostToolUse:
+    - matcher: "Bash"
+      hooks:
+        - type: command
+          command: "${CLAUDE_PLUGIN_ROOT}/hooks/strikes.sh record"
+          timeout: 5
+  PostToolUseFailure:
+    - matcher: "Bash"
+      hooks:
+        - type: command
+          command: "${CLAUDE_PLUGIN_ROOT}/hooks/strikes.sh record"
+          timeout: 5
 initialPrompt: Review the changes you were given. Run the project's tests, typecheck, and lint. Report findings sorted into blocking and noise, each with file:line.
 skills:
   - mtk:verify

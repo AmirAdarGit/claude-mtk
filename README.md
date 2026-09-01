@@ -85,6 +85,25 @@ time they needed a command nobody listed. This side of the trade-off keeps them 
 
 `tdd-implementer` has no such hook -- writing is its job.
 
+## The 3-strikes rule is enforced, not requested
+
+`development-pipeline` says "three failed attempts at the same step = STOP". That lived in a
+markdown file, with the agent counting its own failures -- a counter inside the thing it counts
+is a suggestion, not a limit.
+
+`hooks/strikes.sh` moves it into code. `PostToolUse` and `PostToolUseFailure` record every Bash
+result; `PreToolUse` denies a command that has already failed three times **with the same
+result**.
+
+Command *and result*, deliberately. In TDD a failing test is the goal, so counting failures per
+command would block `tdd-implementer` on its own first RED step. Stuck means no progress: the
+same command, the same failure, again. Timings, dates, temp paths and hex ids are normalised out
+first, so two identical failures are recognised as identical. A success clears every strike for
+that command.
+
+State lives in `~/.mtk/strikes/<session>.tsv` and is deleted after a day.
+`MTK_STRIKE_LIMIT` changes the number.
+
 ## worktree.sh
 
 BUILD never edits your folder. It gets a disposable copy on its own branch.

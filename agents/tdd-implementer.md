@@ -5,6 +5,25 @@ tools: Read, Edit, MultiEdit, Write, Bash, Grep, Glob
 model: inherit
 effort: high
 maxTurns: 30
+hooks:
+  PreToolUse:
+    - matcher: "Bash"
+      hooks:
+        - type: command
+          command: "${CLAUDE_PLUGIN_ROOT}/hooks/strikes.sh check"
+          timeout: 5
+  PostToolUse:
+    - matcher: "Bash"
+      hooks:
+        - type: command
+          command: "${CLAUDE_PLUGIN_ROOT}/hooks/strikes.sh record"
+          timeout: 5
+  PostToolUseFailure:
+    - matcher: "Bash"
+      hooks:
+        - type: command
+          command: "${CLAUDE_PLUGIN_ROOT}/hooks/strikes.sh record"
+          timeout: 5
 color: blue
 initialPrompt: Read the plan you were given. Take the first step. Write a failing test, run it and show the failure, then write the minimum code to pass. Do not start step two until step one is green.
 skills:
@@ -34,6 +53,9 @@ Then, and only then, move to the next step.
   ambiguous and why. Do not resolve it yourself.
 - **Three failed attempts on one step and you stop.** Report what you tried, what the error
   was each time, and hand it back. Trying a fourth time is how an afternoon disappears.
+  A hook enforces this: the fourth identical failure of the same command is denied. RED steps
+  are safe — the counter keys on command *and result*, so a test failing differently each step,
+  or failing then passing, never counts toward the limit.
 - **Anything you notice that isn't in the plan goes on a list**, not into the code. Report
   the list at the end.
 

@@ -160,7 +160,10 @@ For each step in the plan:
 
 Rules:
 - **Stay inside the plan.** Something you notice mid-build that isn't in the plan goes on a list; it does not go into this commit.
-- **Three failed attempts at the same step = STOP.** That's a blocking condition, not a reason to try harder. Go back to gate 2.
+- **Three failed attempts at the same step = STOP.** That's a blocking condition, not a reason
+  to try harder. Go back to gate 2. This is **enforced**: a `PreToolUse` hook denies a Bash
+  command that has already failed three times with the same result. When you see that denial,
+  report what you tried and hand it back — do not reword the command to get past it.
 - If the code has no test setup at all, say so at gate 2 — don't silently build a test harness nobody asked for.
 
 **Output:** working code, plus the red-then-green output for each step.

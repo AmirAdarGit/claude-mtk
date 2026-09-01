@@ -15,6 +15,21 @@ hooks:
         - type: command
           command: "${CLAUDE_PLUGIN_ROOT}/hooks/no-writes.sh"
           timeout: 5
+        - type: command
+          command: "${CLAUDE_PLUGIN_ROOT}/hooks/strikes.sh check"
+          timeout: 5
+  PostToolUse:
+    - matcher: "Bash"
+      hooks:
+        - type: command
+          command: "${CLAUDE_PLUGIN_ROOT}/hooks/strikes.sh record"
+          timeout: 5
+  PostToolUseFailure:
+    - matcher: "Bash"
+      hooks:
+        - type: command
+          command: "${CLAUDE_PLUGIN_ROOT}/hooks/strikes.sh record"
+          timeout: 5
 initialPrompt: Adversarially verify the claims you were given. Default to skeptical. Try to refute each one against the actual files and real command output. Report per-target verdicts with file:line evidence.
 skills:
   - mtk:verify

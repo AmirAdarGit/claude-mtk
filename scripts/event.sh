@@ -23,16 +23,17 @@
 #   MTK_RUN     run/session id      (default: mtk-<date>)
 #   MTK_APP     source app name     (default: mtk)
 #   MTK_OBS_URL server endpoint     (default: http://localhost:4000/events)
-#   MTK_OBS_OFF set to 1 to disable sending entirely
+#   MTK_OBS_OFF set to 1 to disable for a single command
 #
-# Also disabled whenever ~/.mtk/obs-off exists (see scripts/obs.sh off).
+# OFF BY DEFAULT: nothing is sent unless ~/.mtk/obs-on exists.
+# Create it with `scripts/obs.sh on`, remove it with `scripts/obs.sh off`.
 
 set -uo pipefail
 
-# Two ways off: the env var for one command, the flag file for good.
-# `obs.sh off` writes the flag; `obs.sh on` removes it.
+# OFF BY DEFAULT. One switch: ~/.mtk/obs-on must exist, and only `obs.sh on`
+# creates it. Installing mtk must never start recording without being asked.
+[ -f "$HOME/.mtk/obs-on" ] || exit 0
 [ "${MTK_OBS_OFF:-0}" = "1" ] && exit 0
-[ -f "$HOME/.mtk/obs-off" ] && exit 0
 
 TYPE="${1:-}"
 [ -n "$TYPE" ] || { echo "event.sh: usage: event.sh <type> [key=value ...]" >&2; exit 0; }

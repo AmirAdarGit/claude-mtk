@@ -38,7 +38,7 @@ find_db() {
   printf '%s' "${MTK_OBS_DB:-events.db}"      # give up; have_db will report it
 }
 DB="$(find_db)"
-FLAG="$HOME/.mtk/obs-off"
+FLAG="$HOME/.mtk/obs-on"      # exists = ON. absent = OFF (the default).
 CMD="${1:-status}"; shift || true
 
 have_db() { [ -f "$DB" ] || { echo "obs.sh: no database at $DB" >&2; echo "obs.sh: set MTK_OBS_DB to point at it" >&2; return 1; }; }
@@ -49,8 +49,8 @@ command -v sqlite3 >/dev/null 2>&1 || { echo "obs.sh: sqlite3 not installed" >&2
 case "$CMD" in
 
   status)
-    if [ -f "$FLAG" ]; then echo "mtk events:  OFF   (remove $FLAG to re-enable)"
-    else                    echo "mtk events:  ON"; fi
+    if [ -f "$FLAG" ]; then echo "mtk events:  ON    (obs.sh off to stop)"
+    else                    echo "mtk events:  OFF   (obs.sh on to start -- this is the default)"; fi
     if [ -f "$DB" ]; then
       sz=$(du -ch "$DB" "$DB-wal" 2>/dev/null | tail -1 | cut -f1)
       n=$(sqlite3 "$DB" "SELECT COUNT(*) FROM events;" 2>/dev/null)
@@ -141,15 +141,13 @@ case "$CMD" in
     ;;
 
   off)
-    mkdir -p "$(dirname "$FLAG")" && touch "$FLAG"
-    echo "obs.sh: mtk events OFF. Nothing from mtk will be recorded."
-    echo "obs.sh: Claude Code hooks still run. To stop those too:"
-    echo "  <observability-repo>/install-into.sh --remove $(pwd)"
+    rm -f "$FLAG"
+    echo "obs.sh: OFF. Neither mtk's own events nor its hooks will record anything."
     ;;
 
   on)
-    rm -f "$FLAG"
-    echo "obs.sh: mtk events ON."
+    mkdir -p "$(dirname "$FLAG")" && touch "$FLAG"
+    echo "obs.sh: ON. Needs the server running -- see README."
     ;;
 
   *)

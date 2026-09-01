@@ -1,0 +1,14 @@
+{
+  "description": "mtk observability — records lifecycle events to a local server. OFF unless ~/.mtk/obs-on exists (created by `mtk/scripts/obs.sh on`). Nothing is sent off your machine.",
+  "hooks": {
+    "SessionStart":    [{ "hooks": [{ "type": "command", "command": "sh ${CLAUDE_PLUGIN_ROOT}/hooks/send.sh SessionStart",    "timeout": 3 }] }],
+    "SessionEnd":      [{ "hooks": [{ "type": "command", "command": "sh ${CLAUDE_PLUGIN_ROOT}/hooks/send.sh SessionEnd",      "timeout": 3 }] }],
+    "UserPromptSubmit":[{ "hooks": [{ "type": "command", "command": "sh ${CLAUDE_PLUGIN_ROOT}/hooks/send.sh UserPromptSubmit","timeout": 3 }] }],
+    "PreToolUse":      [{ "matcher": "", "hooks": [{ "type": "command", "command": "sh ${CLAUDE_PLUGIN_ROOT}/hooks/send.sh PreToolUse",  "timeout": 3 }] }],
+    "PostToolUse":     [{ "matcher": "", "hooks": [{ "type": "command", "command": "sh ${CLAUDE_PLUGIN_ROOT}/hooks/send.sh PostToolUse", "timeout": 3 }] }],
+    "PostToolUseFailure":[{ "matcher": "", "hooks": [{ "type": "command", "command": "sh ${CLAUDE_PLUGIN_ROOT}/hooks/send.sh PostToolUseFailure", "timeout": 3 }] }],
+    "SubagentStart":   [{ "hooks": [{ "type": "command", "command": "sh ${CLAUDE_PLUGIN_ROOT}/hooks/send.sh SubagentStart",   "timeout": 3 }] }],
+    "SubagentStop":    [{ "hooks": [{ "type": "command", "command": "sh ${CLAUDE_PLUGIN_ROOT}/hooks/send.sh SubagentStop",    "timeout": 3 }] }],
+    "Stop":            [{ "hooks": [{ "type": "command", "command": "sh ${CLAUDE_PLUGIN_ROOT}/hooks/send.sh Stop",            "timeout": 3 }] }]
+  }
+}

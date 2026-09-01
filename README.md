@@ -82,24 +82,35 @@ BUILD never edits your folder. It gets a disposable copy on its own branch.
 Removing the folder is not removing the work -- the branch keeps the commits,
 and `new` with the same slug brings the folder back. All local; no network.
 
-## Observability (optional, off-able)
+## Observability (ships with mtk, OFF by default)
 
 `scripts/event.sh` posts phase and gate events to a local server, so a run shows
 up as a timeline next to the Claude Code hook events. `verify.sh` and
 `worktree.sh` call it themselves.
 
 ```bash
+./scripts/obs.sh on         # start recording  (nothing records until you do this)
 ./scripts/obs.sh status     # on/off, size, event count
 ./scripts/obs.sh stats      # runs, gates, verify history, tool use
 ./scripts/obs.sh prune 30   # delete anything older than 30 days
-./scripts/obs.sh off        # stop recording
+./scripts/obs.sh off        # stop
 ```
+
+**One switch: `~/.mtk/obs-on`.** It does not exist until you run `obs.sh on`, so
+installing mtk records nothing. `off` deletes it, and both `hooks/send.sh` and
+`scripts/event.sh` check for it before doing anything.
+
+`hooks/hooks.json` covers 9 lifecycle events -- session start/end, prompts,
+every tool call, tool failures, and subagent start/stop. Only small fields are
+sent: tool name, a short description, the project folder name. Never file
+contents, never full command text.
+
+Recording needs a local server listening on `http://localhost:4000/events`:
+https://github.com/disler/claude-code-hooks-multi-agent-observability
+With no server running, every send times out in 2s and is discarded.
 
 Roughly 3.5 KB per event, measured. Nothing reads this log automatically -- not
 Claude, not the agents. It is worth keeping only while `stats` is being read.
-`off` is the honest choice otherwise.
-
-Server: https://github.com/disler/claude-code-hooks-multi-agent-observability
 
 ## Dependencies
 

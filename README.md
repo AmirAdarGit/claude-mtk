@@ -42,8 +42,15 @@ run in a forked context, because a gate that cannot ask a question is not a gate
 ## Install locally
 
 ```bash
-/plugin marketplace add /path/to/mtk
-/plugin install mtk@mtk-local
+/plugin marketplace add AmirAdarGit/claude-mtk
+/plugin install mtk@mtk
+```
+
+Or from a local clone:
+
+```bash
+/plugin marketplace add /path/to/claude-mtk
+/plugin install mtk@mtk
 ```
 
 ## verify.sh

@@ -42,7 +42,7 @@ run in a forked context, because a gate that cannot ask a question is not a gate
 ## Install locally
 
 ```bash
-/plugin marketplace add /Users/asdf/Documents/SHIT/arie-toolkit/mtk
+/plugin marketplace add /path/to/mtk
 /plugin install mtk@mtk-local
 ```
 
@@ -52,7 +52,7 @@ run in a forked context, because a gate that cannot ask a question is not a gate
 re-run them by hand.
 
 ```bash
-./scripts/verify.sh --dir ../SomeProject --json
+./scripts/verify.sh --dir ../some-project --json
 ```
 
 `0` all clear · `1` warnings only · `2` failures · `3` blocked.

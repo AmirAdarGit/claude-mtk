@@ -15,13 +15,29 @@
 # for. If you are not reading it, `off` is the honest choice -- nothing else
 # reads this file, not the agents and not Claude.
 #
+# The log comes from the observability server at
+# https://github.com/disler/claude-code-hooks-multi-agent-observability
+# which keeps its SQLite file at apps/server/events.db, relative to wherever the
+# server was started.
+#
 # Env:
-#   MTK_OBS_DB   path to events.db
-#                (default: ~/Documents/SHIT/obs/apps/server/events.db)
+#   MTK_OBS_DB   full path to events.db. Set this if the search below misses it.
 
 set -uo pipefail
 
-DB="${MTK_OBS_DB:-$HOME/Documents/SHIT/obs/apps/server/events.db}"
+# Look in a few ordinary places rather than hardcoding one person's layout.
+find_db() {
+  [ -n "${MTK_OBS_DB:-}" ] && { printf '%s' "$MTK_OBS_DB"; return; }
+  for base in "$PWD" "$PWD/.." "$PWD/../.." "$PWD/../../.." \
+              "$HOME" "$HOME/Documents" "$HOME/src" "$HOME/code" "$HOME/projects"; do
+    for name in obs claude-code-hooks-multi-agent-observability; do
+      c="$base/$name/apps/server/events.db"
+      [ -f "$c" ] && { printf '%s' "$c"; return; }
+    done
+  done
+  printf '%s' "${MTK_OBS_DB:-events.db}"      # give up; have_db will report it
+}
+DB="$(find_db)"
 FLAG="$HOME/.mtk/obs-off"
 CMD="${1:-status}"; shift || true
 
@@ -48,7 +64,7 @@ case "$CMD" in
     fi
     echo
     echo "Claude Code hooks are separate. To stop those too:"
-    echo "  ~/Documents/SHIT/obs/install-into.sh --remove <project-dir>"
+    echo "  <observability-repo>/install-into.sh --remove <project-dir>"
     ;;
 
   stats)
@@ -128,7 +144,7 @@ case "$CMD" in
     mkdir -p "$(dirname "$FLAG")" && touch "$FLAG"
     echo "obs.sh: mtk events OFF. Nothing from mtk will be recorded."
     echo "obs.sh: Claude Code hooks still run. To stop those too:"
-    echo "  ~/Documents/SHIT/obs/install-into.sh --remove $(pwd)"
+    echo "  <observability-repo>/install-into.sh --remove $(pwd)"
     ;;
 
   on)

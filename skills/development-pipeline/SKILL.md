@@ -83,6 +83,12 @@ the work or become a reason to pause.
 
 **Goal:** understand the real situation before having any opinion about it.
 
+**If the argument is a path to a `specs/*.md` file, read it first.** It already
+carries the problem, what done means, what is deliberately out of scope, and the
+open questions. Explore the code against that, and raise anything the spec got
+wrong at gate 1 rather than quietly working around it. Its **Not doing** list is
+binding — treat it as scope the user already refused.
+
 Do:
 - Read the code that actually runs. Follow the imports.
 - Find how this thing is done *elsewhere in this repo* — match the house style, don't import your own.

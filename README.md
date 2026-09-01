@@ -5,6 +5,18 @@ A development pipeline with gates that actually stop and ask.
 Forked down from [claude-forge/etk](https://github.com/ArieGoldkin/claude-forge)
 (27 skills / 5 agents / 21 commands) to something one person can read in a sitting.
 
+## Three entry points
+
+```
+/mtk:spec      an idea, no task yet   ask -> write specs/<name>.md
+/mtk:chore     small, you know how    do it -> verify -> show diff
+/mtk:develop   real work              explore -> plan -> build -> review, with gates
+```
+
+`/mtk:spec` leaves a **file**, not a conversation. It is versioned, it survives the
+session, it can be argued with in a PR, and `/mtk:develop specs/x.md` takes it as
+input. A design that lives only in chat has to be re-explained to the next agent.
+
 ## Two lanes
 
 Pick by size. Small and you already know how -> chore. Anything else -> develop.

@@ -10,7 +10,7 @@ Forked down from [claude-forge/etk](https://github.com/ArieGoldkin/claude-forge)
 ```
 /mtk:spec      an idea, no task yet   ask -> write specs/<name>.md
 /mtk:chore     small, you know how    do it -> verify -> show diff
-/mtk:develop   real work              explore -> plan -> build -> review, with gates
+/mtk:develop   real work              explore -> design -> hypothesize -> plan -> build -> review, with gates
 ```
 
 `/mtk:spec` leaves a **file**, not a conversation. It is versioned, it survives the
@@ -23,7 +23,7 @@ Pick by size. Small and you already know how -> chore. Anything else -> develop.
 
 ```
 /mtk:chore     small job    do it -> verify -> show diff
-/mtk:develop   real work    explore -> plan -> build -> review, with gates
+/mtk:develop   real work    six phases, with a gate after each
 ```
 
 If you are unsure which, use `develop`. Two minutes of questions beats an
@@ -32,12 +32,31 @@ afternoon of the wrong thing.
 ## The pipeline
 
 ```
-  EXPLORE  →|  PLAN  →|  BUILD  →|  REVIEW
-           gate      gate       gate
+  EXPLORE →| DESIGN →| HYPOTHESIZE →| PLAN →| BUILD →| REVIEW →| decide
+          g1        g2             g3      g4       g5        merge · keep · leave · discard
 ```
 
 Each gate scores the task, states its assumptions, and **asks**. It does not
 run in a forked context, because a gate that cannot ask a question is not a gate.
+
+DESIGN chooses between two approaches. HYPOTHESIZE names the one assumption the
+chosen approach depends on, what would prove it false, and what done means. Both
+come from `etk:development-pipeline`; here each has a gate that can ask.
+
+### Modes
+
+The first word of the arguments picks how much of the pipeline runs. With no
+word, the pipeline picks one and states it at gate 1, where you can change it.
+
+```
+/mtk:develop greenfield "..."   new code               all six phases
+/mtk:develop brownfield "..."   change existing code   all six, shorter design
+/mtk:develop bugfix "..."       something is broken    skips DESIGN and HYPOTHESIZE
+/mtk:develop refactor "..."     same behaviour         characterization tests first
+```
+
+`/mtk:develop specs/x.md` still works. A spec that already has an Approach is
+checked in DESIGN, not redone.
 
 ## Status
 
@@ -50,6 +69,7 @@ run in a forked context, because a gate that cannot ask a question is not a gate
 | 5 | agents: tdd-implementer, quality-reviewer, adversarial-verifier | done |
 | 6 | remaining commands | done |
 | 7 | use it on real work, fix what annoys | ongoing |
+| 8 | pipeline grows to 6 phases: DESIGN, HYPOTHESIZE, and four task modes | done, not yet run on real work |
 
 ## Install locally
 

@@ -1,7 +1,7 @@
 {
   "name": "mtk",
-  "version": "0.1.0",
-  "description": "My toolkit — a 4-phase development pipeline (explore, plan, build, review) with real gates that stop and ask. Forked down from claude-forge/etk to a size one person can read.",
+  "version": "0.2.0",
+  "description": "My toolkit — a 6-phase development pipeline (explore, design, hypothesize, plan, build, review) with real gates that stop and ask. Forked down from claude-forge/etk to a size one person can read.",
   "author": {
     "name": "Amir",
     "url": "https://github.com/AmirAdarGit"

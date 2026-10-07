@@ -8,7 +8,7 @@
     {
       "name": "mtk",
       "source": "./",
-      "description": "My toolkit — 4-phase pipeline with gates that actually stop and ask."
+      "description": "My toolkit — 6-phase pipeline with gates that actually stop and ask."
     }
   ]
 }

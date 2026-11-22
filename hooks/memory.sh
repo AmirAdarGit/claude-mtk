@@ -129,7 +129,28 @@ if mode == "start":
         if entries:
             out.append(f"\n=== mtk log: last {min(5, len(entries))} of {len(entries)} episodes (.mtk/log.md) ===")
             out.append("\n".join(e.strip() for e in entries[-5:])[:3000])
-    print("\n".join(out))
+
+    # Short banner for the USER (systemMessage is shown in the terminal);
+    # the full memory goes to CLAUDE as additionalContext.
+    def line(prefix):
+        for l in read(NOW).splitlines():
+            if l.startswith(prefix):
+                return l[len(prefix):].strip()
+        return ""
+    banner = ["=== mtk memory ==="]
+    if stale:
+        banner.append("STALE: code changed after the memory. Run /mtk:handoff.")
+    if line("Goal:"):
+        banner.append("Goal: " + line("Goal:")[:200])
+    if line("Next:"):
+        banner.append("Next: " + line("Next:")[:200])
+    if steps is not None:
+        banner.append(f"Plan: {len(steps) - len(open_steps)} of {len(steps)} steps done (.mtk/plan.json)")
+    banner.append("Claude already has this memory. Write \"continue\" to start the next step.")
+    print(json.dumps({
+        "systemMessage": "\n".join(banner),
+        "hookSpecificOutput": {"hookEventName": "SessionStart", "additionalContext": "\n".join(out)},
+    }))
     done()
 
 if mode == "precompact":

@@ -13,6 +13,7 @@ is the check.
 
 ```
 /mtk:go        not sure which         pick a route -> ask you -> run it
+/mtk:handoff   save the memory        goal, next step, plan, episode log -> .mtk/
 /mtk:spec      an idea, no task yet   ask -> write specs/<name>.md
 /mtk:chore     small, you know how    do it -> verify -> show diff
 /mtk:develop   real work              explore -> design -> hypothesize -> plan -> build -> review, with gates
@@ -146,17 +147,18 @@ belongs to the skill.
 
 ## What is in hooks/
 
-Five scripts, five different jobs, wired in two different places.
+Six scripts, six different jobs, wired in two different places.
 
 | Script | Job | Wired in | Scope |
 |---|---|---|---|
 | `send.sh` | records lifecycle events | `hooks/hooks.json` | whole plugin |
 | `style.sh` | adds the chosen answer style | `hooks/hooks.json` | whole plugin |
 | `verify-gate.sh` | blocks a chore from finishing until `verify.sh` checked the files | `hooks/hooks.json` | sessions that ran a chore |
+| `memory.sh` | shows the memory at start and after compaction; stops once for `/mtk:handoff` after a commit or at 70% context | `hooks/hooks.json` | whole plugin |
 | `no-writes.sh` | denies writing Bash commands | `agents/*.md` | 2 reviewer agents |
 | `strikes.sh` | denies a command that keeps failing | `agents/*.md` | all 3 agents |
 
-Only `send.sh`, `style.sh` and `verify-gate.sh` are in `hooks.json`. The other two are per-agent on purpose: a plugin-wide
+Only `send.sh`, `style.sh`, `verify-gate.sh` and `memory.sh` are in `hooks.json`. The other two are per-agent on purpose: a plugin-wide
 write block would stop `tdd-implementer` doing its job, and a plugin-wide strike counter
 would apply to your own commands as well as the agents'.
 
@@ -195,6 +197,46 @@ that command.
 
 State lives in `~/.mtk/strikes/<session>.tsv` and is deleted after a day.
 `MTK_STRIKE_LIMIT` changes the number.
+
+## Memory: the plan survives sessions and compaction
+
+`/mtk:handoff` writes three files at the repo root, committed with the code:
+
+- `.mtk/now.md` — Goal, the one Next step, short Decisions.
+- `.mtk/plan.json` — the steps: `{"id", "step", "done"}`. JSON, because models
+  change JSON files less carelessly than Markdown (Anthropic, *Effective harnesses
+  for long-running agents*).
+- `.mtk/log.md` — one short entry per episode: what was done, what was decided,
+  what is open. This is the project history across chats.
+
+It always ends by showing what it wrote and asking you "correct, or something
+missing?". Claude writes the memory; you are the check that it is complete.
+
+**The hook decides when. Claude decides what.** A hook is a script and cannot
+understand a chat, so `hooks/memory.sh` only finds the moment and stops Claude
+once to run `/mtk:handoff`:
+
+| When | Does | Enforced? |
+|---|---|---|
+| a commit was made after `now.md` last changed | stops once per new commit | yes |
+| the context window is 70% full (`MTK_HANDOFF_AT`) | stops once per session; you then `/clear` | yes |
+| before compaction | tells the summary to keep goal, steps, and unlogged work | yes |
+| every session start, and after compaction | prints now.md, open steps, last 5 log entries; **STALE** if commits are newer | yes |
+| a plan step was removed or renamed (vs git HEAD) | blocks | yes |
+| — | that what is written is good and complete | no — your answer to the question is the check |
+
+Context size comes from the session log: the token usage of the last answer. The
+log does not say the window size, so the hook guesses: 1M for Opus models (seen on
+this setup: 79.6k tokens shown as 8%) or once a session passed 200k, else 200k.
+Set `MTK_CONTEXT_WINDOW` to override it.
+
+Compared with ctk: `ledger` -> the three files; `/save-state` and `/create-handoff`
+-> `/mtk:handoff`; `/resume-session` -> not needed, every session shows the memory.
+Why not ctk's ledger: on 2026-11-22 it was 3 months old and its automatic handoff
+had empty `next_steps`, by design: only manual commands write goals there, and
+nothing checks age. Design and evidence: `specs/memory.md`.
+
+Without `.mtk/now.md`, only the 70% stop runs (it creates the files on first use).
 
 ## A chore cannot finish without verify.sh
 

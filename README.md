@@ -7,7 +7,12 @@ Forked down from [claude-forge/etk](https://github.com/ArieGoldkin/claude-forge)
 
 ## Three entry points
 
+Not sure which one? `/mtk:go "<task>"` picks it for you, shows the reason, and asks
+you to confirm before anything starts. The pick is the model's judgment; your click
+is the check.
+
 ```
+/mtk:go        not sure which         pick a route -> ask you -> run it
 /mtk:spec      an idea, no task yet   ask -> write specs/<name>.md
 /mtk:chore     small, you know how    do it -> verify -> show diff
 /mtk:develop   real work              explore -> design -> hypothesize -> plan -> build -> review, with gates

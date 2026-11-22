@@ -119,6 +119,12 @@ the work or become a reason to pause.
 
 **Goal:** understand the real situation before having any opinion about it.
 
+**First, check for a run that is already open.** Run `git worktree list`. If any
+worktree is on an `mtk/*` branch, another `/mtk:develop` run may still be working
+in it, possibly in another session. Name each one, and ask before you go on:
+continue in that run's session, start a new run anyway, or stop. Two runs on the
+same task make plans and worktrees that conflict.
+
 **If the argument is a path to a `specs/*.md` file, read it first.** It already
 carries the problem, what done means, the chosen approach, what is deliberately out
 of scope, and the open questions. Explore the code against that, and raise anything

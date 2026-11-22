@@ -48,3 +48,7 @@
 - Found: skills/development-pipeline/SKILL.md never dispatched tdd-implementer, quality-reviewer or adversarial-verifier; only /mtk:review and /mtk:refute did.
 - Done: BUILD dispatches tdd-implementer per plan step (absolute $WT, commit each green step); REVIEW dispatches quality-reviewer, then adversarial-verifier with Done-means claims; blocking finding → back to BUILD; fallback when agents are missing; README + tdd-implementer boundary. verify.sh all clear.
 - Open: not yet run for real — the step 8 test on Dev Brain is the first run. Risk: no-writes.sh checks git state in the session cwd, not in $WT, so a reviewer write inside the worktree is not caught by the "after" check.
+## 2026-11-22 — 0.3.8: warn about an open develop run
+- Found (step 8 test on Dev Brain): a second /mtk:develop run started in another session while the first was at gate 4 with worktree mtk/voyage-spike; only the user's answer at gate 1 stopped it.
+- Done: Phase 1 now runs `git worktree list` and asks first when an `mtk/*` worktree exists.
+- Checked so far in step 8: gates 1-4 asked every time; the auto mode classifier (not an mtk hook) denied a grep of other projects' .env files.

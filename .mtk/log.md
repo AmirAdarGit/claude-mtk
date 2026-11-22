@@ -36,3 +36,7 @@
 - Found: heartbeats showed no-writes.sh and strikes.sh never ran — Claude Code ignores `hooks:` in plugin agents' frontmatter; a probe showed hook input inside an agent has agent_type.
 - Done: both hooks in hooks.json, filtered by agent_type; no-writes.sh also checks git files after each reviewer command (catches python3 -c writes); dead frontmatter hooks removed; 40 tests, verify.sh all clear.
 - Open: live test needs a new session (hooks.json loads at session start); step 13 stays open until it passes.
+## 2026-11-22 — step 13 live test passed
+- Checked: in a new session, the mtk:quality-reviewer ran `python3 -c open()`; no-writes.sh after blocked it and named nw-probe.txt. `rm nw-probe2.txt` was denied before it ran; the file stayed.
+- Checked: /mtk:doctor all OK; no-writes.sh and strikes.sh ran in both modes.
+- Note: after a write block, the agent stops and does not run later commands, so test each rule in its own run.

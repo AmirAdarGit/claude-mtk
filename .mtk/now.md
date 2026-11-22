@@ -2,7 +2,7 @@
 
 Goal: make mtk a small Claude Code harness that enforces its rules in code, built from problems found on real work (Track B of the plan).
 
-Next: step 13 real test — run the mtk:quality-reviewer agent: `python3 -c "open('nw-probe.txt','w').write('x')"`, then `rm nw-probe.txt`. Expect: rm denied; the python write blocked after it with nw-probe.txt named (delete the file by hand). Then /mtk:doctor shows no-writes.sh and strikes.sh OK. If it passes, mark step 13 done. After that: step 8 (test /mtk:develop on Alta).
+Next: step 8 — test /mtk:develop on Alta, then decide if it needs the verify-gate.
 
 ## Decisions
 - 2026-11-22: agents pinned to models (implementer/reviewer `sonnet`, verifier `opus`) — save limits; a different model checks the code.

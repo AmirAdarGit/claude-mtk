@@ -1,18 +1,74 @@
 {
   "steps": [
-    { "id": 1, "step": "Pin a model and effort to each agent (0.2.1)", "done": true },
-    { "id": 2, "step": "Output style modes: /mtk:style short|full|default (0.2.2)", "done": true },
-    { "id": 3, "step": "Router: /mtk:go picks spec, chore or a develop mode and asks first (0.2.3)", "done": true },
-    { "id": 4, "step": "Step 0: use mtk on a real task in Alta and list what went wrong", "done": true },
-    { "id": 5, "step": "verify-gate: a chore cannot finish until verify.sh checked the files (0.2.4)", "done": true },
-    { "id": 6, "step": "Memory: .mtk/ files, /mtk:handoff, stop after a commit and at 70% context (0.3.0)", "done": true },
-    { "id": 7, "step": "Test memory in a restarted session, then commit and push 0.3.0", "done": true },
-    { "id": 8, "step": "Decide whether /mtk:develop also needs the verify-gate", "done": false },
-    { "id": 9, "step": "Lead + sessions: one lead opens real sessions with Herder or cmux", "done": false },
-    { "id": 10, "step": "Self-learning on cron: read hooks/send.sh data and suggest PRs to improve mtk", "done": false },
-    { "id": 11, "step": "Hook tests: tests/ feeds fake JSON to memory.sh, verify-gate.sh, strikes.sh, no-writes.sh, so verify.sh can check mtk itself", "done": true },
-    { "id": 12, "step": "/mtk:doctor: check the installed plugin version matches the repo and that each hook really runs", "done": true },
-    { "id": 13, "step": "Close the no-writes.sh hole: block reviewer writes by git state, not by a list of commands (python3 -c open() gets through today)", "done": false },
-    { "id": 14, "step": "Optimize rule: every hook has a budget test (time, output size) and a review pass; fix STALE to look at all .mtk/ files", "done": true }
+    {
+      "id": 1,
+      "step": "Pin a model and effort to each agent (0.2.1)",
+      "done": true
+    },
+    {
+      "id": 2,
+      "step": "Output style modes: /mtk:style short|full|default (0.2.2)",
+      "done": true
+    },
+    {
+      "id": 3,
+      "step": "Router: /mtk:go picks spec, chore or a develop mode and asks first (0.2.3)",
+      "done": true
+    },
+    {
+      "id": 4,
+      "step": "Step 0: use mtk on a real task in Alta and list what went wrong",
+      "done": true
+    },
+    {
+      "id": 5,
+      "step": "verify-gate: a chore cannot finish until verify.sh checked the files (0.2.4)",
+      "done": true
+    },
+    {
+      "id": 6,
+      "step": "Memory: .mtk/ files, /mtk:handoff, stop after a commit and at 70% context (0.3.0)",
+      "done": true
+    },
+    {
+      "id": 7,
+      "step": "Test memory in a restarted session, then commit and push 0.3.0",
+      "done": true
+    },
+    {
+      "id": 8,
+      "step": "Decide whether /mtk:develop also needs the verify-gate",
+      "done": false
+    },
+    {
+      "id": 9,
+      "step": "Lead + sessions: one lead opens real sessions with Herder or cmux",
+      "done": false
+    },
+    {
+      "id": 10,
+      "step": "Self-learning on cron: read hooks/send.sh data and suggest PRs to improve mtk",
+      "done": false
+    },
+    {
+      "id": 11,
+      "step": "Hook tests: tests/ feeds fake JSON to memory.sh, verify-gate.sh, strikes.sh, no-writes.sh, so verify.sh can check mtk itself",
+      "done": true
+    },
+    {
+      "id": 12,
+      "step": "/mtk:doctor: check the installed plugin version matches the repo and that each hook really runs",
+      "done": true
+    },
+    {
+      "id": 13,
+      "step": "Close the no-writes.sh hole: block reviewer writes by git state, not by a list of commands (python3 -c open() gets through today)",
+      "done": true
+    },
+    {
+      "id": 14,
+      "step": "Optimize rule: every hook has a budget test (time, output size) and a review pass; fix STALE to look at all .mtk/ files",
+      "done": true
+    }
   ]
 }

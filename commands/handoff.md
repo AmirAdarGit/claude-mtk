@@ -8,6 +8,16 @@ argument-hint: "[optional: what changed]"
 The project memory is three files at the repo root. Every new session, and every
 compaction, shows them automatically (hooks/memory.sh). They must be true.
 
+**The repo root is the MAIN folder, even when this session runs in a worktree.**
+Find it first, and read and write `.mtk/` only there, then commit there:
+
+```bash
+ROOT=$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)")
+```
+
+A worktree has its own copy of `.mtk/` on a side branch. The next session opens
+on the main folder and would never see a handoff written into that copy.
+
 | File | Holds |
 |---|---|
 | `.mtk/now.md` | Goal, the one Next step, short Decisions |

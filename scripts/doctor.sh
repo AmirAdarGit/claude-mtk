@@ -145,8 +145,15 @@ except Exception:
     say("FAIL", "git is not installed -- memory.sh and verify-gate.sh need it", "install git")
 
 # ── 5. project memory ───────────────────────────────────────────────────────
-r = subprocess.run(["git", "-C", proj, "rev-parse", "--show-toplevel"], capture_output=True)
-top = r.stdout.decode().strip() if r.returncode == 0 else proj
+# same rule as memory.sh: the memory lives in the main folder, not in a worktree
+r = subprocess.run(["git", "-C", proj, "rev-parse", "--path-format=absolute", "--git-common-dir"],
+                   capture_output=True)
+common = r.stdout.decode().strip() if r.returncode == 0 else ""
+if os.path.basename(common) == ".git":
+    top = os.path.dirname(common)
+else:
+    r = subprocess.run(["git", "-C", proj, "rev-parse", "--show-toplevel"], capture_output=True)
+    top = r.stdout.decode().strip() if r.returncode == 0 else proj
 now = os.path.join(top, ".mtk", "now.md")
 if not os.path.isfile(now):
     say("INFO", f"no project memory in {top}/.mtk/", "run /mtk:handoff to create it")

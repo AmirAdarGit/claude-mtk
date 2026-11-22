@@ -64,7 +64,15 @@ def git(*args, cwd=cwd):
     r = subprocess.run(["git", "-C", cwd, *args], capture_output=True, timeout=10)
     return r.stdout.decode(errors="replace").strip() if r.returncode == 0 else None
 
-root = git("rev-parse", "--show-toplevel") or cwd
+# The memory lives in the MAIN folder, even when this session runs in a git
+# worktree (mtk's own, or one Claude Code made). --show-toplevel would give the
+# worktree, whose .mtk/ is an old copy on a side branch. --git-common-dir points
+# at the main folder's .git from any worktree.
+common = git("rev-parse", "--path-format=absolute", "--git-common-dir")
+if common and os.path.basename(common) == ".git":
+    root = os.path.dirname(common)
+else:
+    root = git("rev-parse", "--show-toplevel") or cwd
 NOW = os.path.join(root, ".mtk", "now.md")
 PLAN = os.path.join(root, ".mtk", "plan.json")
 LOG = os.path.join(root, ".mtk", "log.md")

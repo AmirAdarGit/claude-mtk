@@ -89,6 +89,16 @@ class MemoryTest(HookCase):
         self.commit(path, "memory")
         return path
 
+    def test_start_in_a_worktree_shows_the_main_folder_memory(self):
+        # Seen live (step 8, Dev Brain): a session ran in a Claude Code worktree, so
+        # the memory it read and the handoff it wrote were an old copy on a side branch.
+        main = self.memory_repo()
+        wt = os.path.join(self.tmp, "wt")
+        self.git(main, "worktree", "add", "-q", "-b", "side", wt)
+        self.write(main, ".mtk/now.md", NOW.replace("write one test", "the newer next step"))
+        _, d = self.hook("memory.sh", "start", payload={"cwd": wt})
+        self.assertIn("Next: the newer next step", d["systemMessage"])
+
     def test_start_without_memory_prints_nothing(self):
         out, _ = self.hook("memory.sh", "start", payload={"cwd": self.repo()})
         self.assertEqual(out, "")

@@ -56,3 +56,6 @@
 - Found (step 8 spike review): no-writes.sh denied a read-only quality-reviewer command that piped TypeScript into node via `cat <<'EOF'`; `=>` and `>=` in the body looked like redirects.
 - Done: heredoc bodies are dropped before the deny-list; the opening line is kept, so `cat <<EOF > out.txt` is still denied. 2 new tests (failed first); the real command from the Dev Brain transcript is now allowed.
 - Step 8 so far: gates asked every time; implementer, reviewer and verifier all dispatched; review found giveaway words in the eval → back to build worked. Reviewer and verifier ran in parallel, not one after the other.
+## 2026-11-23 — 0.3.10: memory always lives in the main folder
+- Found (step 8 handoff on Dev Brain): the session ran in a Claude Code worktree (.claude/worktrees/handoff-voyage-spike); memory.sh used --show-toplevel, so it read and /mtk:handoff wrote an old .mtk/ copy on a side branch.
+- Done: memory.sh and doctor.sh find the main folder with `git rev-parse --git-common-dir`; /mtk:handoff writes and commits .mtk/ there. New test failed first (old Next shown), now passes.

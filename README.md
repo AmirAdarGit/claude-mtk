@@ -206,12 +206,12 @@ Every tool in mtk must stay correct, fast, and small. Checked by code, not promi
 | `memory.sh stop` | 1 s, 2 000 chars | 0.28 s |
 | `verify-gate.sh base` (every tool call) | 1 s, 0 chars | 0.11 s |
 | `verify-gate.sh stop` | 1 s, 1 000 chars | 0.32 s |
-| `strikes.sh`, `no-writes.sh` | 0.5 s | 0.07 s |
+| `strikes.sh`, `no-writes.sh` (every Bash call) | 0.5 s / 1 s | 0.07 s |
 | `style.sh` (every prompt) | 0.5 s, 600 chars | 0.01 s, 195 chars |
 
 ## What is in hooks/
 
-Six scripts, six different jobs, wired in two different places.
+Six scripts, six different jobs, all wired in `hooks/hooks.json`.
 
 | Script | Job | Wired in | Scope |
 |---|---|---|---|
@@ -219,12 +219,15 @@ Six scripts, six different jobs, wired in two different places.
 | `style.sh` | adds the chosen answer style | `hooks/hooks.json` | whole plugin |
 | `verify-gate.sh` | blocks a chore from finishing until `verify.sh` checked the files | `hooks/hooks.json` | sessions that ran a chore |
 | `memory.sh` | shows the memory at start and after compaction; stops once for `/mtk:handoff` after a commit or at 70% context | `hooks/hooks.json` | whole plugin |
-| `no-writes.sh` | denies writing Bash commands | `agents/*.md` | 2 reviewer agents |
-| `strikes.sh` | denies a command that keeps failing | `agents/*.md` | all 3 agents |
+| `no-writes.sh` | denies writing Bash commands, and catches any file change after a command | `hooks/hooks.json` | 2 reviewer agents (by `agent_type`) |
+| `strikes.sh` | denies a command that keeps failing | `hooks/hooks.json` | all 3 agents (by `agent_type`) |
 
-Only `send.sh`, `style.sh`, `verify-gate.sh` and `memory.sh` are in `hooks.json`. The other two are per-agent on purpose: a plugin-wide
-write block would stop `tdd-implementer` doing its job, and a plugin-wide strike counter
-would apply to your own commands as well as the agents'.
+`no-writes.sh` and `strikes.sh` run on every Bash call but act only when the hook input's
+`agent_type` names one of mtk's agents. A plugin-wide write block would stop `tdd-implementer`
+doing its job, and a plugin-wide strike counter would count your own commands too. Until 0.3.5
+they were wired in the agents' frontmatter instead -- and never ran: Claude Code ignores
+`hooks:` in the frontmatter of an agent that comes from a plugin. The `/mtk:doctor` heartbeat
+showed it on 2026-11-22. Neither rule had ever been enforced.
 
 ## Read-only agents are actually read-only
 
@@ -233,13 +236,18 @@ tests, lint, and `git diff`. `disallowedTools: [Write, Edit]` blocks tools by NA
 is not named Write -- so `echo x > file` wrote anyway. The label was documentation, not
 enforcement.
 
-`hooks/no-writes.sh` is the enforcement: a `PreToolUse` hook on those two agents that reads
-`tool_input.command` and denies redirects, `rm`, `mv`, `cp`, `sed -i`, `tee`, `chmod`,
-`git checkout/reset/clean/commit/push`, and package installs. Everything else runs.
+`hooks/no-writes.sh` is the enforcement, with two checks:
 
-It is a deny-list, which is a fence and not a vault: `python3 -c "open('f','w')..."` has no
-`>` and gets through. An allow-list would be airtight and would break the agents the first
-time they needed a command nobody listed. This side of the trade-off keeps them working.
+1. **Before** the command (`PreToolUse`): a deny-list stops the common writes before they
+   happen -- redirects, `rm`, `mv`, `cp`, `sed -i`, `tee`, `chmod`,
+   `git checkout/reset/clean/commit/push`, package installs.
+2. **After** the command (`PostToolUse`): a list cannot see a write inside another program,
+   like `python3 -c "open('f','w')..."`. So the hook compares the files git can see (changed
+   and untracked, by time and size) with how they were before the command. Any change is a
+   write, whatever made it. The hook cannot undo it -- that could destroy your own work -- so
+   it blocks the agent with the list of changed files, and the agent must report them.
+
+Not covered: files git ignores, and files outside the repo.
 
 `tdd-implementer` has no such hook -- writing is its job.
 
@@ -250,7 +258,7 @@ markdown file, with the agent counting its own failures -- a counter inside the 
 is a suggestion, not a limit.
 
 `hooks/strikes.sh` moves it into code. `PostToolUse` and `PostToolUseFailure` record every Bash
-result; `PreToolUse` denies a command that has already failed three times **with the same
+result of an mtk agent; `PreToolUse` denies a command that has already failed three times **with the same
 result**.
 
 Command *and result*, deliberately. In TDD a failing test is the goal, so counting failures per

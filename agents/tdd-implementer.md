@@ -5,25 +5,6 @@ tools: Read, Edit, MultiEdit, Write, Bash, Grep, Glob
 model: sonnet
 effort: high
 maxTurns: 30
-hooks:
-  PreToolUse:
-    - matcher: "Bash"
-      hooks:
-        - type: command
-          command: "${CLAUDE_PLUGIN_ROOT}/hooks/strikes.sh check"
-          timeout: 5
-  PostToolUse:
-    - matcher: "Bash"
-      hooks:
-        - type: command
-          command: "${CLAUDE_PLUGIN_ROOT}/hooks/strikes.sh record"
-          timeout: 5
-  PostToolUseFailure:
-    - matcher: "Bash"
-      hooks:
-        - type: command
-          command: "${CLAUDE_PLUGIN_ROOT}/hooks/strikes.sh record"
-          timeout: 5
 color: blue
 initialPrompt: Read the plan you were given. Take the first step. Write a failing test, run it and show the failure, then write the minimum code to pass. Do not start step two until step one is green.
 skills:

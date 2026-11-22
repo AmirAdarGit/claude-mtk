@@ -263,8 +263,10 @@ class VerifyGateTest(HookCase):
 
 # ── strikes.sh ──────────────────────────────────────────────────────────────
 class StrikesTest(HookCase):
-    def payload(self, cmd, exit_code=None, out=""):
+    def payload(self, cmd, exit_code=None, out="", agent="mtk:tdd-implementer"):
         p = {"session_id": "s1", "tool_input": {"command": cmd}}
+        if agent:
+            p["agent_type"] = agent
         if exit_code is not None:
             p["tool_response"] = {"exit_code": exit_code, "stdout": out}
         return p
@@ -301,6 +303,12 @@ class StrikesTest(HookCase):
         self.fail("npm test", "error A")
         self.assertIsNone(self.check("npm test"))
 
+    def test_your_own_commands_are_never_counted(self):
+        for _ in range(4):
+            self.hook("strikes.sh", "record", payload=self.payload("npm test", 1, "FAIL", agent=None))
+        _, d = self.hook("strikes.sh", "check", payload=self.payload("npm test", agent=None))
+        self.assertIsNone(d)
+
     def test_limit_can_be_changed(self):
         self.fail("make", "boom")
         _, d = self.hook("strikes.sh", "check", payload=self.payload("make"), env={"MTK_STRIKE_LIMIT": "1"})
@@ -309,8 +317,14 @@ class StrikesTest(HookCase):
 
 # ── no-writes.sh ────────────────────────────────────────────────────────────
 class NoWritesTest(HookCase):
-    def decision(self, cmd):
-        _, d = self.hook("no-writes.sh", payload={"tool_input": {"command": cmd}})
+    def payload(self, cmd, agent="mtk:quality-reviewer", cwd=None):
+        p = {"session_id": "s1", "agent_id": "a1", "tool_input": {"command": cmd}, "cwd": cwd or self.tmp}
+        if agent:
+            p["agent_type"] = agent
+        return p
+
+    def decision(self, cmd, agent="mtk:quality-reviewer"):
+        _, d = self.hook("no-writes.sh", payload=self.payload(cmd, agent))
         return d and d["hookSpecificOutput"]["permissionDecision"]
 
     def test_read_only_commands_pass(self):
@@ -328,10 +342,42 @@ class NoWritesTest(HookCase):
             with self.subTest(cmd=cmd):
                 self.assertEqual(self.decision(cmd), "deny")
 
-    @unittest.expectedFailure
-    def test_python_write_is_denied(self):
-        # Known hole, plan step 13: a deny-list cannot see a write inside python.
-        self.assertEqual(self.decision("python3 -c \"open('f','w').write('x')\""), "deny")
+    def test_both_reviewer_agents_are_read_only(self):
+        self.assertEqual(self.decision("rm x", agent="mtk:adversarial-verifier"), "deny")
+
+    def test_other_agents_and_your_own_commands_are_not_touched(self):
+        self.assertIsNone(self.decision("rm x", agent="mtk:tdd-implementer"))
+        self.assertIsNone(self.decision("rm x", agent=None))
+
+    def test_a_hidden_python_write_is_caught_after_the_command(self):
+        # The old hole: no redirect, no rm -- the deny-list lets it through.
+        path = self.repo()
+        cmd = "python3 -c \"open('f','w').write('x')\""
+        p = self.payload(cmd, cwd=path)
+        out, _ = self.hook("no-writes.sh", payload=p)
+        self.assertEqual(out, "", "the deny-list cannot see this write")
+        self.write(path, "f", "x")                              # what the command did
+        _, d = self.hook("no-writes.sh", "after", payload=p)
+        self.assertEqual(d["decision"], "block")
+        self.assertIn("changed files: f", d["reason"])
+        out, _ = self.hook("no-writes.sh", "after", payload=p)
+        self.assertEqual(out, "", "each change is reported once")
+
+    def test_a_change_to_a_tracked_file_is_caught(self):
+        path = self.repo()
+        p = self.payload("node -e \"require('fs').writeFileSync('README.md','x')\"", cwd=path)
+        self.hook("no-writes.sh", payload=p)
+        self.write(path, "README.md", "changed by node\n")
+        _, d = self.hook("no-writes.sh", "after", payload=p)
+        self.assertIn("README.md", d["reason"])
+
+    def test_a_read_only_command_changes_nothing(self):
+        path = self.repo()
+        self.write(path, "dirty.txt", "the user's own work in progress\n")   # already dirty: not the agent's
+        p = self.payload("git diff", cwd=path)
+        self.hook("no-writes.sh", payload=p)
+        out, _ = self.hook("no-writes.sh", "after", payload=p)
+        self.assertEqual(out, "")
 
 
 if __name__ == "__main__":

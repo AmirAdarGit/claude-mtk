@@ -31,3 +31,8 @@
 - Done: heartbeat line in all 6 hooks (~/.mtk/beat/); scripts/doctor.sh + commands/doctor.md; tests/test_doctor.py (8 tests, 3 failed when the code was broken on purpose). 35 tests, verify.sh: all clear.
 - Found: hooks run straight from the source folder (directory marketplace); the registry's 0.2.2 is a stale number.
 - Open: run /mtk:doctor in a new session — memory.sh start, style.sh and the Stop hooks show OK only after they run once.
+
+## 2026-11-22 — 0.3.5: no-writes and strikes really run (step 13, not yet tested live)
+- Found: heartbeats showed no-writes.sh and strikes.sh never ran — Claude Code ignores `hooks:` in plugin agents' frontmatter; a probe showed hook input inside an agent has agent_type.
+- Done: both hooks in hooks.json, filtered by agent_type; no-writes.sh also checks git files after each reviewer command (catches python3 -c writes); dead frontmatter hooks removed; 40 tests, verify.sh all clear.
+- Open: live test needs a new session (hooks.json loads at session start); step 13 stays open until it passes.

@@ -136,11 +136,6 @@ sends = [k for k in wired if k.startswith("send.sh")]
 if sends:
     seen = [k for k in sends if k in beats]
     say("OK" if seen else "WARN", f"send.sh ran for {len(seen)} of {len(sends)} events")
-for agent_hook in ("no-writes.sh-", "strikes.sh-check", "strikes.sh-record"):
-    if agent_hook in beats:
-        say("OK", f"{name(agent_hook)} ran {ago(beats[agent_hook][1])} ago (inside an mtk agent)")
-    else:
-        say("INFO", f"{name(agent_hook)} has not run yet -- it runs only inside mtk's agents")
 
 # ── 4. tools ────────────────────────────────────────────────────────────────
 try:

@@ -31,7 +31,8 @@ BUDGETS = {
     ("verify-gate.sh", "stop"):  (1.0, 1_000),
     ("strikes.sh", "check"):     (0.5, 1_000),    # before every Bash call of an agent
     ("strikes.sh", "record"):    (0.5, 0),
-    ("no-writes.sh", None):      (0.5, 1_000),
+    ("no-writes.sh", None):      (1.0, 1_000),    # every Bash call; git only for reviewers
+    ("no-writes.sh", "after"):   (1.0, 1_000),
     ("style.sh", None):          (0.5, 600),      # added to EVERY prompt
     ("send.sh", "*"):            (0.5, 0),
 }
@@ -66,6 +67,7 @@ class BudgetTest(HookCase):
 
     def payload(self):
         return {"cwd": self.path, "session_id": "budget", "transcript_path": self.transcript,
+                "agent_type": "mtk:quality-reviewer", "agent_id": "a1",
                 "tool_input": {"command": "npm test"},
                 "tool_response": {"exit_code": 1, "stdout": "FAIL"}}
 

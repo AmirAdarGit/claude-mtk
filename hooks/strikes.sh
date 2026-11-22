@@ -34,7 +34,16 @@ MODE="${1:-check}"
 LIMIT="${MTK_STRIKE_LIMIT:-3}"
 
 PAYLOAD=$(cat)
-export PAYLOAD MODE LIMIT
+# Wired in hooks/hooks.json for every Bash call, but it counts only the calls of
+# mtk's agents (hook input "agent_type"), never your own commands. Until 0.3.5 it
+# was wired in the agents' frontmatter, where Claude Code never ran it.
+AGENTS="${MTK_STRIKE_AGENTS:-mtk:tdd-implementer mtk:quality-reviewer mtk:adversarial-verifier}"
+hit=0
+for a in $AGENTS; do
+  case "$PAYLOAD" in *"$a"*) hit=1 ;; esac
+done
+[ "$hit" = 1 ] || exit 0
+export PAYLOAD MODE LIMIT AGENTS
 
 command -v python3 >/dev/null 2>&1 || exit 0
 
@@ -47,6 +56,9 @@ limit = int(os.environ.get("LIMIT", "3") or 3)
 try:
     d = json.loads(os.environ.get("PAYLOAD", "") or "{}")
 except Exception:
+    sys.exit(0)
+
+if d.get("agent_type") not in os.environ.get("AGENTS", "").split():
     sys.exit(0)
 
 cmd = (d.get("tool_input") or {}).get("command", "")

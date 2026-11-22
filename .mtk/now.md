@@ -2,7 +2,7 @@
 
 Goal: make mtk a small Claude Code harness that enforces its rules in code, built from problems found on real work (Track B of the plan).
 
-Next: run /mtk:develop on one real Alta task and check whether gate 5 shows the full verify.sh output (step 8). Build the gate only if it does not.
+Next: step 13 real test — run the mtk:quality-reviewer agent: `python3 -c "open('nw-probe.txt','w').write('x')"`, then `rm nw-probe.txt`. Expect: rm denied; the python write blocked after it with nw-probe.txt named (delete the file by hand). Then /mtk:doctor shows no-writes.sh and strikes.sh OK. If it passes, mark step 13 done. After that: step 8 (test /mtk:develop on Alta).
 
 ## Decisions
 - 2026-11-22: agents pinned to models (implementer/reviewer `sonnet`, verifier `opus`) — save limits; a different model checks the code.
@@ -17,3 +17,4 @@ Next: run /mtk:develop on one real Alta task and check whether gate 5 shows the 
 - 2026-11-22: hook tests use stdlib unittest, not pytest — nothing to install; verify.sh runs `tests/test_*.py` with unittest when there is no pytest config.
 - 2026-11-22: optimize rule — every hook has a budget test (time, output size) in tests/test_budget.py, and a wired hook without a budget fails; measure before optimizing (a verify-gate transcript cache saved 0.02 s, so it was not kept).
 - 2026-11-22: /mtk:doctor trusts heartbeats, not the plugin registry — every hook writes ~/.mtk/beat/<script>-<mode> with its folder; the registry said 0.2.2 while hooks ran 0.3.3 from the source folder (directory marketplace).
+- 2026-11-22: no-writes.sh and strikes.sh moved from agents/*.md frontmatter to hooks.json, filtered by the hook input's agent_type — heartbeats showed Claude Code never ran plugin-agent frontmatter hooks, so neither rule was ever enforced.

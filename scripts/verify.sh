@@ -81,7 +81,7 @@ want() { [ -z "$ONLY" ] || [ "$ONLY" = "$1" ]; }
 
 # ── detect ───────────────────────────────────────────────────────────────────
 HAS_NPM_TEST=0; HAS_TSC=0; HAS_ESLINT=0; HAS_BIOME=0
-HAS_PYTEST=0;   HAS_RUFF=0; HAS_CARGO=0
+HAS_PYTEST=0;   HAS_RUFF=0; HAS_CARGO=0; HAS_UNITTEST=0
 
 if [ -f package.json ]; then
   grep -q '"test"[[:space:]]*:' package.json && HAS_NPM_TEST=1
@@ -95,8 +95,11 @@ ls .eslintrc* eslint.config.* >/dev/null 2>&1 && HAS_ESLINT=1
                            grep -qi ruff   pyproject.toml && HAS_RUFF=1; }
 [ -f ruff.toml ]      && HAS_RUFF=1
 [ -f Cargo.toml ]     && HAS_CARGO=1
+# Python tests with no pytest config: run them with the standard library's unittest,
+# which needs nothing installed. (mtk's own tests/ are like this.)
+[ "$HAS_PYTEST" = 0 ] && ls tests/test_*.py >/dev/null 2>&1 && HAS_UNITTEST=1
 
-TOTAL=$(( HAS_NPM_TEST + HAS_TSC + HAS_ESLINT + HAS_BIOME + HAS_PYTEST + HAS_RUFF + HAS_CARGO ))
+TOTAL=$(( HAS_NPM_TEST + HAS_TSC + HAS_ESLINT + HAS_BIOME + HAS_PYTEST + HAS_RUFF + HAS_CARGO + HAS_UNITTEST ))
 if [ "$TOTAL" -eq 0 ]; then
   if [ "$FORMAT" = json ]; then
     printf '{"level":"blocked","reason":"no recognised project in %s","checks":[]}\n' "$(json_escape "$DIR")"
@@ -111,6 +114,7 @@ if want tests; then
   TEST_CMD=""
   [ "$HAS_NPM_TEST" = 1 ] && TEST_CMD="npm test --silent -- --run"
   [ "$HAS_PYTEST"   = 1 ] && TEST_CMD="pytest -q"
+  [ "$HAS_UNITTEST" = 1 ] && TEST_CMD="python3 -m unittest discover -s tests"
   [ "$HAS_CARGO"    = 1 ] && TEST_CMD="cargo test --quiet"
 
   if [ -n "$TEST_CMD" ]; then

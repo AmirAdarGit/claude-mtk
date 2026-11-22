@@ -145,6 +145,24 @@ The script reports facts (which checks ran, exit codes, counts per lint rule).
 It does not decide which findings matter -- that needs reading the code, and
 belongs to the skill.
 
+Python projects with `tests/test_*.py` and no pytest config run with
+`python3 -m unittest`, so nothing has to be installed. mtk itself is one of them.
+
+## Tests
+
+`tests/test_hooks.py` runs the four hooks that enforce rules -- `memory.sh`,
+`verify-gate.sh`, `strikes.sh`, `no-writes.sh` -- the way Claude Code does: a JSON
+payload on stdin, the answer read from stdout. Each test uses a temp `HOME` and a
+temp git repo, so your real `~/.mtk` is never touched.
+
+```bash
+./scripts/verify.sh                       # or: python3 -m unittest discover -s tests
+```
+
+One test is an expected failure: `python3 -c "open('f','w')"` gets past
+`no-writes.sh` today. Not covered: `send.sh`, `style.sh`, `worktree.sh`,
+`verify.sh` itself, and whether Claude Code really calls each hook.
+
 ## What is in hooks/
 
 Six scripts, six different jobs, wired in two different places.

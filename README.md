@@ -163,6 +163,26 @@ One test is an expected failure: `python3 -c "open('f','w')"` gets past
 `no-writes.sh` today. Not covered: `send.sh`, `style.sh`, `worktree.sh`,
 `verify.sh` itself, and whether Claude Code really calls each hook.
 
+## /mtk:doctor -- does mtk really run here?
+
+```bash
+sh scripts/doctor.sh            # or /mtk:doctor in a session
+```
+
+Every hook writes a heartbeat when it runs: `~/.mtk/beat/<script>-<mode>`, holding
+the plugin folder it ran from (the file time says when). The doctor reads them and
+reports, as OK / WARN / FAIL with a fix:
+
+- which mtk copy really runs, and its version against the source folder
+- each hook in `hooks.json`: did it run, and how long ago
+- `python3` and `git`, the project's `.mtk/` memory, and whether ctk is also on
+
+Why: the plugin registry said mtk 0.2.2 was installed while the 0.3.3 hooks ran --
+with a `directory` marketplace, Claude Code runs the hooks straight from the source
+folder and the registry number lags. And a hook once wired in skill frontmatter
+never ran, with nothing to show it. Tests call hooks by hand; only a trace from a
+real run proves Claude Code calls them. The doctor reads only and changes nothing.
+
 ## The optimize rule
 
 Every tool in mtk must stay correct, fast, and small. Checked by code, not promised:

@@ -11,6 +11,10 @@
 # This never fails and never blocks. A hook that errors or hangs interrupts the
 # session it is supposed to be quietly watching, so every path here exits 0.
 
+# heartbeat for /mtk:doctor: "this hook ran, from this plugin folder" (file time = when)
+B="${MTK_HOME:-$HOME/.mtk}/beat"; [ -d "$B" ] || mkdir -p "$B" 2>/dev/null
+printf '%s\n' "${0%/*}/.." > "$B/${0##*/}-${1:-}" 2>/dev/null || true
+
 EVENT="${1:-Unknown}"
 
 # --- the switch: absent flag means off ---------------------------------------

@@ -16,3 +16,4 @@ Next: run /mtk:develop on one real Alta task and check whether gate 5 shows the 
 - 2026-11-22: plan steps 11-13 added (hook tests, /mtk:doctor, no-writes by git state) — from problems seen today: verify.sh cannot check mtk itself, a cached plugin copy can run old hooks, `python3 -c open()` passes no-writes.sh.
 - 2026-11-22: hook tests use stdlib unittest, not pytest — nothing to install; verify.sh runs `tests/test_*.py` with unittest when there is no pytest config.
 - 2026-11-22: optimize rule — every hook has a budget test (time, output size) in tests/test_budget.py, and a wired hook without a budget fails; measure before optimizing (a verify-gate transcript cache saved 0.02 s, so it was not kept).
+- 2026-11-22: /mtk:doctor trusts heartbeats, not the plugin registry — every hook writes ~/.mtk/beat/<script>-<mode> with its folder; the registry said 0.2.2 while hooks ran 0.3.3 from the source folder (directory marketplace).

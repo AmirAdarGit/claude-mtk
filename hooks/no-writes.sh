@@ -25,6 +25,10 @@
 # Reads the hook payload on stdin. Prints deny JSON to block, or exits 0 to let
 # the normal permission flow continue.
 
+# heartbeat for /mtk:doctor: "this hook ran, from this plugin folder" (file time = when)
+B="${MTK_HOME:-$HOME/.mtk}/beat"; [ -d "$B" ] || mkdir -p "$B" 2>/dev/null
+printf '%s\n' "${0%/*}/.." > "$B/${0##*/}-${1:-}" 2>/dev/null || true
+
 set -u
 
 PAYLOAD=$(cat)

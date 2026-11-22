@@ -17,6 +17,10 @@
 #
 # Always exits 0: a style hook must never block a prompt.
 
+# heartbeat for /mtk:doctor: "this hook ran, from this plugin folder" (file time = when)
+B="${MTK_HOME:-$HOME/.mtk}/beat"; [ -d "$B" ] || mkdir -p "$B" 2>/dev/null
+printf '%s\n' "${0%/*}/.." > "$B/${0##*/}-${1:-}" 2>/dev/null || true
+
 STYLE_FILE="${MTK_HOME:-$HOME/.mtk}/style"
 CAVEMAN_FLAG="${CLAUDE_CONFIG_DIR:-$HOME/.claude}/.caveman-active"
 

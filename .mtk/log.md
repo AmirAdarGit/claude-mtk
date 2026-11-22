@@ -26,3 +26,8 @@
 - Fixed: memory STALE looked only at now.md; now any .mtk/ file counts (test failed first).
 - Decided: no transcript cache in verify-gate.sh — measured 0.02 s saved per tool call, not worth the code.
 - Open: memory.sh still guesses the context window size from the model name.
+
+## 2026-11-22 — 0.3.4: /mtk:doctor (step 12)
+- Done: heartbeat line in all 6 hooks (~/.mtk/beat/); scripts/doctor.sh + commands/doctor.md; tests/test_doctor.py (8 tests, 3 failed when the code was broken on purpose). 35 tests, verify.sh: all clear.
+- Found: hooks run straight from the source folder (directory marketplace); the registry's 0.2.2 is a stale number.
+- Open: run /mtk:doctor in a new session — memory.sh start, style.sh and the Stop hooks show OK only after they run once.

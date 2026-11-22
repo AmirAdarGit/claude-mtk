@@ -24,6 +24,10 @@
 # Never fails, never blocks longer than it must. Exits 0 on every path except a
 # deliberate deny, which is printed as JSON.
 
+# heartbeat for /mtk:doctor: "this hook ran, from this plugin folder" (file time = when)
+B="${MTK_HOME:-$HOME/.mtk}/beat"; [ -d "$B" ] || mkdir -p "$B" 2>/dev/null
+printf '%s\n' "${0%/*}/.." > "$B/${0##*/}-${1:-}" 2>/dev/null || true
+
 set -u
 
 MODE="${1:-check}"

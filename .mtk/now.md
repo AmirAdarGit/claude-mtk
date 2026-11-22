@@ -2,7 +2,7 @@
 
 Goal: make mtk a small Claude Code harness that enforces its rules in code, built from problems found on real work (Track B of the plan).
 
-Next: step 8 — test /mtk:develop on Alta, then decide if it needs the verify-gate.
+Next: step 8 — test /mtk:develop on a new AI practice project, not Alta. Proposed: "Dev Brain" (RAG + graph + MCP over .mtk/ memory, git history and meeting transcripts). Ask the user to confirm the project and TypeScript or Python, then run /mtk:spec, then /mtk:develop for stage 1.
 
 ## Decisions
 - 2026-11-22: agents pinned to models (implementer/reviewer `sonnet`, verifier `opus`) — save limits; a different model checks the code.
@@ -18,3 +18,6 @@ Next: step 8 — test /mtk:develop on Alta, then decide if it needs the verify-g
 - 2026-11-22: optimize rule — every hook has a budget test (time, output size) in tests/test_budget.py, and a wired hook without a budget fails; measure before optimizing (a verify-gate transcript cache saved 0.02 s, so it was not kept).
 - 2026-11-22: /mtk:doctor trusts heartbeats, not the plugin registry — every hook writes ~/.mtk/beat/<script>-<mode> with its folder; the registry said 0.2.2 while hooks ran 0.3.3 from the source folder (directory marketplace).
 - 2026-11-22: no-writes.sh and strikes.sh moved from agents/*.md frontmatter to hooks.json, filtered by the hook input's agent_type — heartbeats showed Claude Code never ran plugin-agent frontmatter hooks, so neither rule was ever enforced.
+- 2026-11-22: /mtk:style short and full ask for plain, simple English — the user reads English as a second language; technical words stay exact.
+- 2026-11-22: step 8 runs on a new practice project, not Alta — the user wants to practice AI agents and RAG.
+- 2026-11-22: /mtk:develop dispatches the agents (BUILD → tdd-implementer, REVIEW → quality-reviewer then adversarial-verifier) — before 0.3.7 the main session wrote and graded its own code, so the model split and no-writes.sh never applied in develop.

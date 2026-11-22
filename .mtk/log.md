@@ -40,3 +40,11 @@
 - Checked: in a new session, the mtk:quality-reviewer ran `python3 -c open()`; no-writes.sh after blocked it and named nw-probe.txt. `rm nw-probe2.txt` was denied before it ran; the file stayed.
 - Checked: /mtk:doctor all OK; no-writes.sh and strikes.sh ran in both modes.
 - Note: after a write block, the agent stops and does not run later commands, so test each rule in its own run.
+## 2026-11-22 — 0.3.6: plain-English style
+- Done: hooks/style.sh short and full now ask for plain, simple English (short sentences, common words, no idioms); README updated; 369 chars, under the 600 budget; verify.sh all clear (commit 4d6a19e).
+- Decided: step 8 tests /mtk:develop on a new AI practice project, not Alta. Proposed "Dev Brain" (Arie's "Company Brain" idea).
+- Open: project and language not chosen yet.
+## 2026-11-22 — 0.3.7: develop uses the agents
+- Found: skills/development-pipeline/SKILL.md never dispatched tdd-implementer, quality-reviewer or adversarial-verifier; only /mtk:review and /mtk:refute did.
+- Done: BUILD dispatches tdd-implementer per plan step (absolute $WT, commit each green step); REVIEW dispatches quality-reviewer, then adversarial-verifier with Done-means claims; blocking finding → back to BUILD; fallback when agents are missing; README + tdd-implementer boundary. verify.sh all clear.
+- Open: not yet run for real — the step 8 test on Dev Brain is the first run. Risk: no-writes.sh checks git state in the session cwd, not in $WT, so a reviewer write inside the worktree is not caught by the "after" check.

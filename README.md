@@ -91,6 +91,13 @@ expensive model the main session happens to use.
 
 Aliases, not pinned IDs, so a new model release arrives without an edit.
 
+`/mtk:develop` dispatches them (0.3.7). BUILD sends each plan step to
+`tdd-implementer`, which works in the worktree and commits each green step. REVIEW
+sends the diff to `quality-reviewer`, then the *Done means* claims to
+`adversarial-verifier`. A blocking finding or a refuted claim goes back to BUILD.
+The main session runs the phases and the gates, and does not write the code or grade
+it alone. You can also run the two reviewers by hand with `/mtk:review` and `/mtk:refute`.
+
 The main session runs the gates, the design and the plan, and a plugin cannot
 choose its model. Recommended: run `/mtk:develop` on Opus at medium effort.
 Never Extra High by default.

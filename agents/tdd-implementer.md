@@ -27,7 +27,11 @@ Then, and only then, move to the next step.
 
 ## Boundaries
 
-- **Allowed:** writing tests, writing code to pass them, refactoring under a green suite.
+- **Allowed:** writing tests, writing code to pass them, refactoring under a green suite,
+  and committing each green step.
+- **Work only in the worktree path you were given.** Run every command as
+  `cd "<path>" && ...`. Never edit a file outside it. You run BUILD steps only; the
+  gates and the other phases belong to the session that dispatched you.
 - **Forbidden:** design decisions, architecture changes, changing the plan, adding scope,
   or skipping a test because the code "obviously works".
 - **You do not decide what to build.** If the plan is ambiguous, stop and say which step is

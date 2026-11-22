@@ -247,7 +247,36 @@ to edit. Say the path out loud once, so they know where the work is.
   folder, ask before making a worktree. Isolation is for work you are running, not
   for a one-line change they are watching.
 
-For each step in the plan:
+### Who writes the code — the `tdd-implementer` agent
+
+You do not write the code yourself. You run the phase: dispatch, read the report,
+check the evidence. Dispatch `mtk:tdd-implementer` once per plan step (or per small
+group of steps that share one test file). Log `agent_start agent=tdd-implementer`
+before each dispatch. The agent starts with no memory of this session, so the brief
+must hold everything it needs:
+
+- the **absolute** worktree path `$WT`, and the rule: every command runs as
+  `cd "$WT" && ...`, every file path is inside `$WT`, nothing outside it is touched
+- the plan step(s), word for word, and the *Done means* lines they serve
+- the test command for this repo, and the **Not doing** list
+- "commit each green step in `$WT` with a short message" — the final merge takes
+  commits, not loose files
+
+Read each report before the next dispatch:
+
+| Report | What you do |
+|---|---|
+| `DONE` with RED and GREEN output pasted | next step |
+| `DONE` with no RED output | not done — a test that never failed proves nothing. Send it back once. |
+| `DONE_WITH_CONCERNS` | add the concerns to the "noticed" list for gate 5 |
+| `NEEDS_CONTEXT` | the plan is unclear. Answer from the plan if it really says; otherwise go back to gate 4 |
+| `BLOCKED` | stop. Go back to gate 4 with what it tried. Do not retry it yourself. |
+
+**If the agent cannot be dispatched** (plugin agents not loaded), say so, and do
+the steps below yourself in `$WT`. Say at gate 5 that the code was not written by
+the implementer agent.
+
+The loop the agent runs, per step — and the one you run if you fall back:
 
 1. **Write the failing test first.** Run it. Watch it fail. A test that has never failed proves nothing.
 2. Write the smallest code that passes it.
@@ -297,6 +326,26 @@ stop anything.
 
 **Goal:** try to prove the work is wrong before someone else does.
 
+The same model that planned this work should not be the only one to grade it.
+Two read-only agents review it first; `hooks/no-writes.sh` blocks them from
+changing files, so a review cannot quietly fix what it finds.
+
+1. **Dispatch `mtk:quality-reviewer`** (log `agent_start agent=quality-reviewer`).
+   Brief: the absolute `$WT` path (`cd "$WT" && ...` for every command), the diff
+   command `scripts/worktree.sh diff <slug>`, the plan, and the *Done means* list.
+   It runs the checks and returns findings sorted into blocking and noise.
+2. **Dispatch `mtk:adversarial-verifier`** (log `agent_start agent=adversarial-verifier`).
+   Brief: the same `$WT` and diff, plus **claims to refute** — every *Done means*
+   line you believe is true, each with your evidence, and "the reviewer's noise
+   findings are really noise". It returns a verdict per claim.
+3. **A blocking finding or a refuted claim goes back to BUILD.** Dispatch the
+   implementer with the finding, then run gate 5 again, then this review again.
+   Do not argue a finding away and do not fix it yourself.
+4. If an agent cannot be dispatched, say so, and do its part yourself below.
+   Say in the final decision which review was not independent.
+
+Then, with both reports in hand:
+
 - Re-read the diff as if you didn't write it.
 - Check it against the plan — did scope creep in?
 - Mark every *Done means* line true or false, with the evidence for each. A line you cannot mark is false.
@@ -306,7 +355,9 @@ stop anything.
 
 Answer that question honestly, in one sentence, before declaring done.
 
-**Output:** the diff, the evidence, the *Done means* list marked, the one honest risk sentence.
+**Output:** the diff, the evidence, the *Done means* list marked (with the
+verifier's verdict next to each line), the reviewer's blocking findings and what
+happened to each, and the one honest risk sentence.
 
 ### Final decision — what happens to the work?
 

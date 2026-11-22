@@ -9,3 +9,8 @@
 ## 2026-11-22 — memory tested in a restarted session, 0.3.0 shipped
 - Done: a new session given only "continue" loaded .mtk/now.md and found the next step; committed and pushed 0.3.0.
 - Open: step 8 (verify-gate for /mtk:develop).
+
+## 2026-11-22 — 0.3.1: memory banner for the user
+- Done: hooks/memory.sh start shows a banner (Goal, Next, plan progress, STALE) via systemMessage; full memory still goes to Claude as additionalContext (commit 00d87f3).
+- Decided: copy ctk's systemMessage pattern — plain SessionStart stdout is not shown to the user.
+- Open: banner tested only by running the hook by hand, not yet in a restarted session.

@@ -76,14 +76,16 @@ def read(path):
         return ""
 
 def staleness():
-    """(is_stale, commits_since). now.md is stale when code was committed after it last changed."""
+    """(is_stale, commits_since). The memory is stale when code was committed after any .mtk/ file last changed."""
     head_time = git("log", "-1", "--format=%ct", cwd=root)
     if not head_time:
         return False, 0                                   # no commits yet
-    rel = ".mtk/now.md"
+    # Any of the three files counts: a handoff may change only log.md or plan.json.
+    rel = ".mtk/"
     dirty = git("status", "--porcelain", "--", rel, cwd=root)
     if dirty:                                             # edited, not committed yet
-        return os.path.getmtime(NOW) < int(head_time), 0
+        newest = max((os.path.getmtime(f) for f in (NOW, PLAN, LOG) if os.path.isfile(f)), default=0)
+        return newest < int(head_time), 0
     last = git("log", "-1", "--format=%H", "--", rel, cwd=root)
     if not last:
         return True, 0
@@ -240,7 +242,7 @@ if has_memory and os.path.isfile(PLAN):
 # 2. Code moved on, memory did not: stop once per new HEAD.
 stale, n = staleness() if has_memory else (False, 0)
 if stale and once("stale|" + (git("rev-parse", "HEAD", cwd=root) or ""), 1):
-    reasons.append("commits were made after .mtk/now.md last changed. Run /mtk:handoff to record them: "
+    reasons.append("commits were made after the .mtk/ memory last changed. Run /mtk:handoff to record them: "
                    "mark finished plan steps done, add a log entry, and write the one Next step. "
                    "(This stop happens once per new commit.)")
 

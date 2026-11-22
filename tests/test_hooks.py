@@ -115,6 +115,18 @@ class MemoryTest(HookCase):
         self.assertIn("STALE", d["systemMessage"])
         self.assertIn("1 commit(s)", d["hookSpecificOutput"]["additionalContext"])
 
+    def test_a_handoff_that_changes_only_the_log_is_not_stale(self):
+        path = self.memory_repo()
+        self.write(path, "code.py", "x = 1\n")
+        self.commit(path, "code")
+        with open(os.path.join(path, ".mtk/log.md"), "a") as f:
+            f.write("\n## 2026-11-23 — second\n- Done: y\n")
+        self.commit(path, "handoff: log only")
+        _, d = self.hook("memory.sh", "start", payload={"cwd": path})
+        self.assertNotIn("STALE", d["systemMessage"])
+        out, _ = self.hook("memory.sh", "stop", payload={"cwd": path, "session_id": "s1"})
+        self.assertEqual(out, "")
+
     def test_start_reports_broken_plan_json(self):
         path = self.memory_repo()
         self.write(path, ".mtk/plan.json", "{not json")
@@ -192,6 +204,22 @@ class VerifyGateTest(HookCase):
         self.write(path, "README.md", "changed\n")
         out, _ = self.hook("verify-gate.sh", "stop", payload=p)
         self.assertEqual(out, "")
+
+    def test_a_chore_started_later_is_still_seen(self):
+        # verify-gate reads only the new part of the transcript each time.
+        # A chore that starts after earlier reads must still turn the gate on.
+        path = self.repo()
+        transcript = os.path.join(self.tmp, "t.jsonl")
+        with open(transcript, "w") as f:
+            f.write(json.dumps({"message": {"content": "hello"}}) + "\n")
+        p = {"cwd": path, "session_id": "s1", "transcript_path": transcript}
+        self.hook("verify-gate.sh", "base", payload=p)          # no chore yet
+        with open(transcript, "a") as f:
+            f.write(json.dumps({"message": {"content": "<command-name>/mtk:chore</command-name>"}}) + "\n")
+        self.hook("verify-gate.sh", "base", payload=p)          # chore now: baseline
+        self.write(path, "README.md", "changed\n")
+        _, d = self.hook("verify-gate.sh", "stop", payload=p)
+        self.assertEqual(d["decision"], "block")
 
     def test_chore_with_no_changes_can_stop(self):
         p = self.chore_session(self.repo())

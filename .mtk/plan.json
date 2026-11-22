@@ -12,6 +12,7 @@
     { "id": 10, "step": "Self-learning on cron: read hooks/send.sh data and suggest PRs to improve mtk", "done": false },
     { "id": 11, "step": "Hook tests: tests/ feeds fake JSON to memory.sh, verify-gate.sh, strikes.sh, no-writes.sh, so verify.sh can check mtk itself", "done": true },
     { "id": 12, "step": "/mtk:doctor: check the installed plugin version matches the repo and that each hook really runs", "done": false },
-    { "id": 13, "step": "Close the no-writes.sh hole: block reviewer writes by git state, not by a list of commands (python3 -c open() gets through today)", "done": false }
+    { "id": 13, "step": "Close the no-writes.sh hole: block reviewer writes by git state, not by a list of commands (python3 -c open() gets through today)", "done": false },
+    { "id": 14, "step": "Optimize rule: every hook has a budget test (time, output size) and a review pass; fix STALE to look at all .mtk/ files", "done": true }
   ]
 }

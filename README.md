@@ -163,6 +163,32 @@ One test is an expected failure: `python3 -c "open('f','w')"` gets past
 `no-writes.sh` today. Not covered: `send.sh`, `style.sh`, `worktree.sh`,
 `verify.sh` itself, and whether Claude Code really calls each hook.
 
+## The optimize rule
+
+Every tool in mtk must stay correct, fast, and small. Checked by code, not promised:
+
+1. **Budget test.** `tests/test_budget.py` runs every hook in its worst realistic
+   case (a 20 MB session transcript, big memory files) and fails if it is slower
+   or prints more than its budget. A hook runs on every prompt, tool call or stop,
+   and its output is paid for in tokens.
+2. **Every wired hook has a budget.** A script in `hooks/hooks.json` or
+   `agents/*.md` with no row in `BUDGETS` fails the tests. A new hook cannot skip
+   step 1.
+3. **Review pass before shipping.** Look for wrong results, slow paths and wasted
+   tokens; fix what is found, each fix with a test that failed first.
+4. **Measure before optimizing.** A change that makes the code bigger must save
+   something measurable. (A transcript cache for `verify-gate.sh` saved 0.02 s per
+   tool call -- most of the time is Python starting -- so it was not kept.)
+
+| Hook | Budget | Measured (20 MB transcript) |
+|---|---|---|
+| `memory.sh start` | 1 s, 12 000 chars | 0.24 s, 9 816 chars |
+| `memory.sh stop` | 1 s, 2 000 chars | 0.28 s |
+| `verify-gate.sh base` (every tool call) | 1 s, 0 chars | 0.11 s |
+| `verify-gate.sh stop` | 1 s, 1 000 chars | 0.32 s |
+| `strikes.sh`, `no-writes.sh` | 0.5 s | 0.07 s |
+| `style.sh` (every prompt) | 0.5 s, 600 chars | 0.01 s, 195 chars |
+
 ## What is in hooks/
 
 Six scripts, six different jobs, wired in two different places.

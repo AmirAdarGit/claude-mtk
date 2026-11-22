@@ -15,3 +15,4 @@ Next: run /mtk:develop on one real Alta task and check whether gate 5 shows the 
 - 2026-11-22: step 8 — no verify-gate for /mtk:develop yet; test it on real work first. The current gate checks only the main folder, but develop builds in a worktree, and gate 5 already shows verify output to a human.
 - 2026-11-22: plan steps 11-13 added (hook tests, /mtk:doctor, no-writes by git state) — from problems seen today: verify.sh cannot check mtk itself, a cached plugin copy can run old hooks, `python3 -c open()` passes no-writes.sh.
 - 2026-11-22: hook tests use stdlib unittest, not pytest — nothing to install; verify.sh runs `tests/test_*.py` with unittest when there is no pytest config.
+- 2026-11-22: optimize rule — every hook has a budget test (time, output size) in tests/test_budget.py, and a wired hook without a budget fails; measure before optimizing (a verify-gate transcript cache saved 0.02 s, so it was not kept).

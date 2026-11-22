@@ -18,4 +18,11 @@
 ## 2026-11-22 — 0.3.2: hook tests (step 11)
 - Done: tests/test_hooks.py, 23 tests for memory.sh, verify-gate.sh, strikes.sh, no-writes.sh; verify.sh runs unittest projects; mtk's own verify.sh: all clear.
 - Checked: broke 3 hooks on purpose (banner Next line, strikes limit, tee rule) → 4 tests failed; restored.
+- Fixed: baa0df8 committed tests/__pycache__/*.pyc by mistake; 77008a8 removes it and ignores __pycache__/
 - Open: expected failure for `python3 -c open()` in no-writes.sh (step 13); send.sh, style.sh, worktree.sh, verify.sh untested.
+
+## 2026-11-22 — 0.3.3: optimize rule (step 14)
+- Done: tests/test_budget.py — every hook within a time and output budget on a 20 MB transcript; a wired hook without a budget fails. README "The optimize rule".
+- Fixed: memory STALE looked only at now.md; now any .mtk/ file counts (test failed first).
+- Decided: no transcript cache in verify-gate.sh — measured 0.02 s saved per tool call, not worth the code.
+- Open: memory.sh still guesses the context window size from the model name.

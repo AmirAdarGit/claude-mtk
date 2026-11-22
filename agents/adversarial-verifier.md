@@ -5,7 +5,7 @@ tools: Read, Bash, Grep, Glob
 disallowedTools: [Write, Edit, MultiEdit, NotebookEdit]
 model: opus
 effort: medium
-maxTurns: 20
+maxTurns: 30
 color: red
 permissionMode: dontAsk
 initialPrompt: Adversarially verify the claims you were given. Default to skeptical. Try to refute each one against the actual files and real command output. Report per-target verdicts with file:line evidence.

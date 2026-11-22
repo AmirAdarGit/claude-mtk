@@ -408,3 +408,46 @@ class NoWritesTest(HookCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+# ── secret-guard.sh ─────────────────────────────────────────────────────────
+class SecretGuardTest(HookCase):
+    def decision(self, cmd, agent=None):
+        p = {"session_id": "s1", "tool_input": {"command": cmd}, "cwd": self.tmp}
+        if agent:
+            p["agent_type"] = agent
+        _, d = self.hook("secret-guard.sh", payload=p)
+        return d and d["hookSpecificOutput"]["permissionDecision"]
+
+    def test_commands_that_print_a_secret_are_denied(self):
+        for cmd in (
+            "cat .env", "head -5 .env", "tail .env.local", "sed -n 1,5p .env",
+            "cut -d= -f1 .env",                     # the 2026-11-23 leak: a line with no '='
+            "grep MONGODB .env", "awk -F= '{print $1}' ../dev-brain/.env",
+            "cd /x && cat .env | head", "echo $MONGODB_URI", 'echo "${VOYAGE_API_KEY}"',
+            "printf '%s' $DB_PASSWORD", "printenv", "env", "printenv OPENAI_API_KEY",
+            "while read l; do echo $l; done < .env",
+            "python3 -c \"print(open('.env').read())\"",
+            "node --env-file=.env -e 'console.log(process.env.MONGODB_URI)'",
+        ):
+            with self.subTest(cmd=cmd):
+                self.assertEqual(self.decision(cmd), "deny")
+
+    def test_checks_that_print_no_value_pass(self):
+        for cmd in (
+            "grep -c '^MONGODB_URI=' .env", "grep -q VOYAGE .env && echo yes",
+            "test -f .env", "ls -la .env", "cat .env.example", "cp .env.example .env",
+            "ln -s ../dev-brain/.env .env", "node --env-file=.env dist/cli.js search x",
+            "echo $HOME", "echo hello", "env FOO=1 npm test", "git status", "npm test",
+            "source .env && npm run test:int",
+        ):
+            with self.subTest(cmd=cmd):
+                self.assertIsNone(self.decision(cmd))
+
+    def test_it_guards_agents_too(self):
+        self.assertEqual(self.decision("cat .env", agent="mtk:tdd-implementer"), "deny")
+
+    def test_it_can_be_turned_off(self):
+        _, d = self.hook("secret-guard.sh", payload={"tool_input": {"command": "cat .env"}},
+                         env={"MTK_SECRET_GUARD": "off"})
+        self.assertIsNone(d)

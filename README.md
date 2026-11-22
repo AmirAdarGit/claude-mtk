@@ -219,10 +219,11 @@ Every tool in mtk must stay correct, fast, and small. Checked by code, not promi
 | `verify-gate.sh stop` | 1 s, 1 000 chars | 0.32 s |
 | `strikes.sh`, `no-writes.sh` (every Bash call) | 0.5 s / 1 s | 0.07 s |
 | `style.sh` (every prompt) | 0.5 s, 600 chars | 0.01 s, 369 chars |
+| `secret-guard.sh` (every Bash call) | 0.5 s, 1 000 chars | 0.06 s; 0.12 s when it reads a `.env` command |
 
 ## What is in hooks/
 
-Six scripts, six different jobs, all wired in `hooks/hooks.json`.
+Seven scripts, seven different jobs, all wired in `hooks/hooks.json`.
 
 | Script | Job | Wired in | Scope |
 |---|---|---|---|
@@ -232,6 +233,7 @@ Six scripts, six different jobs, all wired in `hooks/hooks.json`.
 | `memory.sh` | shows the memory at start and after compaction; stops once for `/mtk:handoff` after a commit or at 70% context | `hooks/hooks.json` | whole plugin |
 | `no-writes.sh` | denies writing Bash commands, and catches any file change after a command | `hooks/hooks.json` | 2 reviewer agents (by `agent_type`) |
 | `strikes.sh` | denies a command that keeps failing | `hooks/hooks.json` | all 3 agents (by `agent_type`) |
+| `secret-guard.sh` | denies a command that would print a secret (`cat .env`, `echo $API_KEY`, `printenv`) | `hooks/hooks.json` | every session and agent |
 
 `no-writes.sh` and `strikes.sh` run on every Bash call but act only when the hook input's
 `agent_type` names one of mtk's agents. A plugin-wide write block would stop `tdd-implementer`

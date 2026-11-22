@@ -59,3 +59,7 @@
 ## 2026-11-23 — 0.3.10: memory always lives in the main folder
 - Found (step 8 handoff on Dev Brain): the session ran in a Claude Code worktree (.claude/worktrees/handoff-voyage-spike); memory.sh used --show-toplevel, so it read and /mtk:handoff wrote an old .mtk/ copy on a side branch.
 - Done: memory.sh and doctor.sh find the main folder with `git rev-parse --git-common-dir`; /mtk:handoff writes and commits .mtk/ there. New test failed first (old Next shown), now passes.
+## 2026-11-23 — 0.3.11: secret guard, verifier turns
+- Found (Dev Brain slice 1): a .env check with sed/cut printed the DB password twice (the line had no "="); the first adversarial-verifier hit maxTurns 20 with no report.
+- Done: hooks/secret-guard.sh (PreToolUse Bash, every session and agent) denies readers on .env, echo/printf of secret-looking variables, bare printenv/env, one-liners that print .env or a secret; allows grep -c/-q, test, ls, cp, ln, --env-file. 4 tests; removing the cut rule made the leak test fail. Budget 0.5 s; measured 0.06-0.12 s. adversarial-verifier maxTurns 20 → 30.
+- Open: not yet tested live; a script file that prints secrets is not covered.

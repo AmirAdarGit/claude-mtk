@@ -34,6 +34,7 @@ BUDGETS = {
     ("no-writes.sh", None):      (1.0, 1_000),    # every Bash call; git only for reviewers
     ("no-writes.sh", "after"):   (1.0, 1_000),
     ("style.sh", None):          (0.5, 600),      # added to EVERY prompt
+    ("secret-guard.sh", None):   (0.5, 1_000),    # every Bash call, every session
     ("send.sh", "*"):            (0.5, 0),
 }
 

@@ -1,5 +1,5 @@
 {
-  "description": "mtk observability. Records lifecycle events by POSTing to the server named in MTK_OBS_URL, which defaults to http://localhost:4000/events -- so nothing leaves the machine unless you point it elsewhere. OFF unless ~/.mtk/obs-on exists, which only `mtk/scripts/obs.sh on` creates. These are mtk's PLUGIN-WIDE hooks and they cover send.sh only. The other two scripts in this folder are wired per-agent in agents/*.md, not here: no-writes.sh denies Bash commands that write for the two read-only reviewer agents, and strikes.sh denies a command that has already failed three times with the same result.",
+  "description": "mtk observability. Records lifecycle events by POSTing to the server named in MTK_OBS_URL, which defaults to http://localhost:4000/events -- so nothing leaves the machine unless you point it elsewhere. OFF unless ~/.mtk/obs-on exists, which only `mtk/scripts/obs.sh on` creates. These are mtk's PLUGIN-WIDE hooks and they cover send.sh and style.sh. style.sh adds the answer style chosen with /mtk:style (stored in ~/.mtk/style) on SessionStart and UserPromptSubmit; it prints nothing when no style is set or caveman mode is active. The other two scripts in this folder are wired per-agent in agents/*.md, not here: no-writes.sh denies Bash commands that write for the two read-only reviewer agents, and strikes.sh denies a command that has already failed three times with the same result.",
   "hooks": {
     "SessionStart": [
       {
@@ -7,6 +7,11 @@
           {
             "type": "command",
             "command": "sh ${CLAUDE_PLUGIN_ROOT}/hooks/send.sh SessionStart",
+            "timeout": 3
+          },
+          {
+            "type": "command",
+            "command": "sh ${CLAUDE_PLUGIN_ROOT}/hooks/style.sh",
             "timeout": 3
           }
         ]
@@ -29,6 +34,11 @@
           {
             "type": "command",
             "command": "sh ${CLAUDE_PLUGIN_ROOT}/hooks/send.sh UserPromptSubmit",
+            "timeout": 3
+          },
+          {
+            "type": "command",
+            "command": "sh ${CLAUDE_PLUGIN_ROOT}/hooks/style.sh",
             "timeout": 3
           }
         ]

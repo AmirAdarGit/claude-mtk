@@ -89,6 +89,27 @@ The main session runs the gates, the design and the plan, and a plugin cannot
 choose its model. Recommended: run `/mtk:develop` on Opus at medium effort.
 Never Extra High by default.
 
+## Output style
+
+`/mtk:style short|full|default` sets how Claude writes its answers. With no argument it
+shows the current style.
+
+| Style | What Claude is told |
+|---|---|
+| `short` | answer in the first line, no preamble, no closing summary, no tables unless asked |
+| `full` | the reason for each choice, the alternatives rejected, and a `Not checked:` line |
+| `default` | nothing — Claude's normal style |
+
+The choice is global, one file: `~/.mtk/style`. `hooks/style.sh` reads it on
+`SessionStart` and again on every `UserPromptSubmit`, so the style does not drift away
+in a long session. A change applies from the next message.
+
+If caveman mode is active (`~/.claude/.caveman-active` exists), mtk adds nothing. Two
+sets of style rules would disagree.
+
+**Requested, not enforced.** A hook can add text to the session. It cannot make the
+model follow it.
+
 ## Install locally
 
 ```bash
@@ -120,15 +141,16 @@ belongs to the skill.
 
 ## What is in hooks/
 
-Three scripts, three different jobs, wired in two different places.
+Four scripts, four different jobs, wired in two different places.
 
 | Script | Job | Wired in | Scope |
 |---|---|---|---|
 | `send.sh` | records lifecycle events | `hooks/hooks.json` | whole plugin |
+| `style.sh` | adds the chosen answer style | `hooks/hooks.json` | whole plugin |
 | `no-writes.sh` | denies writing Bash commands | `agents/*.md` | 2 reviewer agents |
 | `strikes.sh` | denies a command that keeps failing | `agents/*.md` | all 3 agents |
 
-Only `send.sh` is in `hooks.json`. The other two are per-agent on purpose: a plugin-wide
+Only `send.sh` and `style.sh` are in `hooks.json`. The other two are per-agent on purpose: a plugin-wide
 write block would stop `tdd-implementer` doing its job, and a plugin-wide strike counter
 would apply to your own commands as well as the agents'.
 

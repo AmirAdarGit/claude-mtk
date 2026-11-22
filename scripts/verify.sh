@@ -46,6 +46,12 @@ done
 cd "$DIR" 2>/dev/null || { echo "verify.sh: cannot enter $DIR" >&2; exit 3; }
 emit verify_start dir="$DIR" only="${ONLY:-all}" streak="$STREAK"
 
+# Tell hooks/verify-gate.sh which state of the files this run checks. A partial
+# run (--only) does not count. Never fails the run.
+if [ -z "${ONLY:-}" ]; then
+  sh "$(dirname "$EVENT")/../hooks/verify-gate.sh" mark "$DIR" >/dev/null 2>&1 || true
+fi
+
 # ── results, kept as parallel arrays ─────────────────────────────────────────
 NAMES=(); CMDS=(); CODES=(); SECS=(); NOTES=()
 

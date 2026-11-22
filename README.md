@@ -146,16 +146,17 @@ belongs to the skill.
 
 ## What is in hooks/
 
-Four scripts, four different jobs, wired in two different places.
+Five scripts, five different jobs, wired in two different places.
 
 | Script | Job | Wired in | Scope |
 |---|---|---|---|
 | `send.sh` | records lifecycle events | `hooks/hooks.json` | whole plugin |
 | `style.sh` | adds the chosen answer style | `hooks/hooks.json` | whole plugin |
+| `verify-gate.sh` | blocks a chore from finishing until `verify.sh` checked the files | `hooks/hooks.json` | sessions that ran a chore |
 | `no-writes.sh` | denies writing Bash commands | `agents/*.md` | 2 reviewer agents |
 | `strikes.sh` | denies a command that keeps failing | `agents/*.md` | all 3 agents |
 
-Only `send.sh` and `style.sh` are in `hooks.json`. The other two are per-agent on purpose: a plugin-wide
+Only `send.sh`, `style.sh` and `verify-gate.sh` are in `hooks.json`. The other two are per-agent on purpose: a plugin-wide
 write block would stop `tdd-implementer` doing its job, and a plugin-wide strike counter
 would apply to your own commands as well as the agents'.
 
@@ -194,6 +195,31 @@ that command.
 
 State lives in `~/.mtk/strikes/<session>.tsv` and is deleted after a day.
 `MTK_STRIKE_LIMIT` changes the number.
+
+## A chore cannot finish without verify.sh
+
+Found on real work: on Alta (PR #100), `/mtk:chore` ran 61 of 891 tests and lint on
+3 files, then reported "lint shows no errors". The full `verify.sh` said `failures`.
+The skill *asked* for `verify.sh`; the agent chose a faster check.
+
+`hooks/verify-gate.sh` runs from `hooks/hooks.json` on `PreToolUse` and `Stop`. It does
+nothing until `/mtk:chore` appears in the session. (It was first put in the chore
+skill's frontmatter; in a real session that hook never ran, so it moved here.) It records the state
+of the files when the chore starts (`git diff HEAD` plus untracked files). When the
+chore tries to finish, it blocks if the files changed and `verify.sh` has not checked
+that exact state. `verify.sh` records each full run; `--only` does not count.
+
+It watches the files, not the tool names. The first version looked for `Edit` calls
+and, run against the same Alta session, let it through: the agent had changed the
+files with a Python script inside `Bash`.
+
+Limits, stated plainly:
+- It proves `verify.sh` ran. It cannot prove the verdict was reported honestly.
+- Outside a git repo it allows, because there is no state to compare.
+- Once a chore ran, it stays on for the rest of that session: later changes also
+  need a `verify.sh` run before the session can stop.
+- After 3 blocks on the same state it lets the stop through, so a project where
+  `verify.sh` cannot run never loops forever.
 
 ## worktree.sh
 

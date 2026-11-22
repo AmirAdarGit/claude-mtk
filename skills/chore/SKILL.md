@@ -33,10 +33,13 @@ Then stop. Do not start it anyway.
 ## Do the work
 
 1. Make the change.
-2. Run the checks:
+2. Run the checks — the full script, not a smaller check of your own, and not `--only`:
    ```bash
    "${CLAUDE_SKILL_DIR}/../../scripts/verify.sh"
    ```
+   This is enforced. `hooks/verify-gate.sh` (wired in `hooks/hooks.json`) blocks the chore from finishing if the
+   files changed and `verify.sh` has not checked them exactly as they are now.
+   Report its verdict as it prints it.
 3. Show `git diff --stat` and say what you changed in one line.
 
 That's the whole skill.

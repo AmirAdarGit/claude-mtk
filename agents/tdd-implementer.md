@@ -2,7 +2,7 @@
 name: tdd-implementer
 description: Implements a planned task test-first — writes the failing test, watches it fail, writes the minimum code to pass, refactors while green. Do NOT use for design, planning, code review, or deciding what to build
 tools: Read, Edit, MultiEdit, Write, Bash, Grep, Glob
-model: inherit
+model: sonnet
 effort: high
 maxTurns: 30
 hooks:

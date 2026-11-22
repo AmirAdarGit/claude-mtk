@@ -3,8 +3,8 @@ name: adversarial-verifier
 description: Tries to REFUTE a claim, fix, or piece of work against ground truth before it ships. The independent check on self-authored work. Do NOT use for writing code, generating fixes, or open-ended exploration
 tools: Read, Bash, Grep, Glob
 disallowedTools: [Write, Edit, MultiEdit, NotebookEdit]
-model: inherit
-effort: high
+model: opus
+effort: medium
 maxTurns: 20
 color: red
 permissionMode: dontAsk

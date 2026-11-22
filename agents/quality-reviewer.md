@@ -3,7 +3,7 @@ name: quality-reviewer
 description: Reviews code for bugs, security problems, and missing test coverage, and runs the project's own checks. Reports findings only. Do NOT use for writing features, fixing what it finds, or product decisions
 tools: Read, Bash, Grep, Glob
 disallowedTools: [Write, Edit, MultiEdit, NotebookEdit]
-model: inherit
+model: sonnet
 effort: medium
 maxTurns: 20
 color: green

@@ -70,6 +70,24 @@ checked in DESIGN, not redone.
 | 6 | remaining commands | done |
 | 7 | use it on real work, fix what annoys | ongoing |
 | 8 | pipeline grows to 6 phases: DESIGN, HYPOTHESIZE, and four task modes | done, not yet run on real work |
+| 9 | each agent pinned to a model and effort | done |
+
+## Models
+
+Each agent names its own model, so a subagent never silently runs on whatever
+expensive model the main session happens to use.
+
+| Agent | model | effort | why |
+|---|---|---|---|
+| `tdd-implementer` | `sonnet` | `high` | writes code from a plan that is already decided |
+| `quality-reviewer` | `sonnet` | `medium` | mostly runs checks and reads their output |
+| `adversarial-verifier` | `opus` | `medium` | needs strong reasoning, and a different model from the one that wrote the code |
+
+Aliases, not pinned IDs, so a new model release arrives without an edit.
+
+The main session runs the gates, the design and the plan, and a plugin cannot
+choose its model. Recommended: run `/mtk:develop` on Opus at medium effort.
+Never Extra High by default.
 
 ## Install locally
 

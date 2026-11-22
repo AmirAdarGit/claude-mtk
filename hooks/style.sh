@@ -31,10 +31,10 @@ style=$(head -c 32 "$STYLE_FILE" | tr -d '[:space:]')
 
 case "$style" in
   short)
-    echo "mtk style: short. Put the answer in the first line. No preamble and no closing summary. No tables or headings unless asked. Keep prose to about five sentences; code and exact output do not count."
+    echo "mtk style: short. Put the answer in the first line. Write plain, simple English: short sentences, one idea per sentence, common words. No idioms, no metaphors, no fragments. Keep technical words exact (names, paths, errors). No preamble and no closing summary. No tables or headings unless asked. Keep prose to about five sentences; code and exact output do not count."
     ;;
   full)
-    echo "mtk style: full. Give the reason behind each choice. Name the alternatives you rejected and why. End with a line that starts 'Not checked:' and lists what you did not verify."
+    echo "mtk style: full. Write plain, simple English: short sentences, one idea per sentence, common words. No idioms, no metaphors. Keep technical words exact (names, paths, errors). Give the reason behind each choice. Name the alternatives you rejected and why. End with a line that starts 'Not checked:' and lists what you did not verify."
     ;;
   *)
     : # default, empty, or unknown: add nothing

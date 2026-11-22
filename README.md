@@ -102,8 +102,12 @@ shows the current style.
 
 | Style | What Claude is told |
 |---|---|
-| `short` | answer in the first line, no preamble, no closing summary, no tables unless asked |
-| `full` | the reason for each choice, the alternatives rejected, and a `Not checked:` line |
+| `short` | plain simple English; answer in the first line, no preamble, no closing summary, no tables unless asked |
+| `full` | plain simple English; the reason for each choice, the alternatives rejected, and a `Not checked:` line |
+
+Both styles ask for plain, simple English: short sentences, one idea per sentence,
+common words, no idioms or metaphors. Technical words (names, paths, errors) stay exact.
+This makes answers easier to read when English is not your first language.
 | `default` | nothing — Claude's normal style |
 
 The choice is global, one file: `~/.mtk/style`. `hooks/style.sh` reads it on
@@ -207,7 +211,7 @@ Every tool in mtk must stay correct, fast, and small. Checked by code, not promi
 | `verify-gate.sh base` (every tool call) | 1 s, 0 chars | 0.11 s |
 | `verify-gate.sh stop` | 1 s, 1 000 chars | 0.32 s |
 | `strikes.sh`, `no-writes.sh` (every Bash call) | 0.5 s / 1 s | 0.07 s |
-| `style.sh` (every prompt) | 0.5 s, 600 chars | 0.01 s, 195 chars |
+| `style.sh` (every prompt) | 0.5 s, 600 chars | 0.01 s, 369 chars |
 
 ## What is in hooks/
 

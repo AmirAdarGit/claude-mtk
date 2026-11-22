@@ -52,3 +52,7 @@
 - Found (step 8 test on Dev Brain): a second /mtk:develop run started in another session while the first was at gate 4 with worktree mtk/voyage-spike; only the user's answer at gate 1 stopped it.
 - Done: Phase 1 now runs `git worktree list` and asks first when an `mtk/*` worktree exists.
 - Checked so far in step 8: gates 1-4 asked every time; the auto mode classifier (not an mtk hook) denied a grep of other projects' .env files.
+## 2026-11-23 — 0.3.9: no-writes.sh ignores heredoc bodies
+- Found (step 8 spike review): no-writes.sh denied a read-only quality-reviewer command that piped TypeScript into node via `cat <<'EOF'`; `=>` and `>=` in the body looked like redirects.
+- Done: heredoc bodies are dropped before the deny-list; the opening line is kept, so `cat <<EOF > out.txt` is still denied. 2 new tests (failed first); the real command from the Dev Brain transcript is now allowed.
+- Step 8 so far: gates asked every time; implementer, reviewer and verifier all dispatched; review found giveaway words in the eval → back to build worked. Reviewer and verifier ran in parallel, not one after the other.

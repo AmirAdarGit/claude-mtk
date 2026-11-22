@@ -342,6 +342,22 @@ class NoWritesTest(HookCase):
             with self.subTest(cmd=cmd):
                 self.assertEqual(self.decision(cmd), "deny")
 
+    def test_heredoc_body_is_data_not_shell(self):
+        # Seen live (step 8, Dev Brain): a reviewer piped TypeScript with => and >= into
+        # node through a heredoc and was denied as a "> redirect".
+        cmd = ("cat <<'EOF' | node --input-type=module\n"
+               "const fl=()=>{if(size>=700)flush()}\n"
+               "EOF")
+        self.assertIsNone(self.decision(cmd))
+        unquoted = "cat <<EOF | node\nconst f=(a)=>a>=1\nEOF\n"
+        self.assertIsNone(self.decision(unquoted))
+
+    def test_a_write_after_a_heredoc_is_still_denied(self):
+        cmd = "cat <<'EOF' > out.txt\nhello\nEOF"
+        self.assertEqual(self.decision(cmd), "deny")
+        cmd = "cat <<'EOF' | node\nx=>1\nEOF\necho done > out.txt"
+        self.assertEqual(self.decision(cmd), "deny")
+
     def test_both_reviewer_agents_are_read_only(self):
         self.assertEqual(self.decision("rm x", agent="mtk:adversarial-verifier"), "deny")
 

@@ -147,8 +147,24 @@ RULES = [
     (r'>>?(?!&)',                            "> redirects output into a file"),
 ]
 
+# A heredoc body is data fed to stdin, not shell syntax: `cat <<'EOF' | node` with
+# `(a)=>a>=1` inside is not a redirect. Drop the body lines; keep the line that
+# opens the heredoc, so `cat <<EOF > out.txt` is still seen. Done before the quote
+# scrub, because a body can hold an odd quote (Hebrew צ'אט) that would break it.
+def strip_heredocs(s):
+    out, pending = [], []
+    for line in s.split("\n"):
+        if pending:
+            if line.strip() == pending[0]:
+                pending.pop(0)
+            continue
+        out.append(line)
+        pending += [m.group(2) for m in
+                    re.finditer(r"(?<!<)<<(?!<)-?\s*(['\"]?)(\w+)\1", line)]
+    return "\n".join(out)
+
 # Quoted strings are data, not shell syntax: grep "a > b" is not a redirect.
-scrubbed = re.sub(r'"[^"]*"', '""', cmd)
+scrubbed = re.sub(r'"[^"]*"', '""', strip_heredocs(cmd))
 scrubbed = re.sub(r"'[^']*'", "''", scrubbed)
 # /dev/null is not a real write and shows up constantly in read-only commands.
 scrubbed = scrubbed.replace(">/dev/null", "").replace("> /dev/null", "")

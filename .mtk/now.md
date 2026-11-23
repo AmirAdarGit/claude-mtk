@@ -2,7 +2,7 @@
 
 Goal: make mtk a small Claude Code harness that enforces its rules in code, built from problems found on real work (Track B of the plan).
 
-Next: step 8 — test /mtk:develop on a new AI practice project, not Alta. Proposed: "Dev Brain" (RAG + graph + MCP over .mtk/ memory, git history and meeting transcripts). Ask the user to confirm the project and TypeScript or Python, then run /mtk:spec, then /mtk:develop for stage 1.
+Next: discuss and build the new agent ideas (plan steps 15-18), memory-checker first. Evidence from 2026-11-23: 3 Dev Brain handoffs each had wrong lines; two gate-4 plans had risky actions (Atlas creation via MCP, Alta data to Voyage). Step 8 (Dev Brain test) continues in the Dev Brain session.
 
 ## Decisions
 - 2026-11-22: agents pinned to models (implementer/reviewer `sonnet`, verifier `opus`) — save limits; a different model checks the code.

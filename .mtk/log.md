@@ -63,3 +63,6 @@
 - Found (Dev Brain slice 1): a .env check with sed/cut printed the DB password twice (the line had no "="); the first adversarial-verifier hit maxTurns 20 with no report.
 - Done: hooks/secret-guard.sh (PreToolUse Bash, every session and agent) denies readers on .env, echo/printf of secret-looking variables, bare printenv/env, one-liners that print .env or a secret; allows grep -c/-q, test, ls, cp, ln, --env-file. 4 tests; removing the cut rule made the leak test fail. Budget 0.5 s; measured 0.06-0.12 s. adversarial-verifier maxTurns 20 → 30.
 - Open: not yet tested live; a script file that prints secrets is not covered.
+## 2026-11-23 — agent ideas saved for a new chat
+- Decided: next mtk work = agents for checks that need judgment (memory-checker, spec-reviewer, gate-4 risk check) and a script for worktree cleanup; plan steps 15-18. Done already: secret guard (0.3.11), verifier maxTurns 30.
+- Open: step 8 still running on Dev Brain (slice 2 of about 7).

@@ -69,6 +69,26 @@
       "id": 14,
       "step": "Optimize rule: every hook has a budget test (time, output size) and a review pass; fix STALE to look at all .mtk/ files",
       "done": true
+    },
+    {
+      "id": 15,
+      "step": "memory-checker agent: /mtk:handoff dispatches it before asking the user; it checks each .mtk/ line against git log, worktrees and the plan (read-only, sonnet)",
+      "done": false
+    },
+    {
+      "id": 16,
+      "step": "spec-reviewer agent: checks a spec before the /mtk:spec gate — gaps, lines that cannot be checked, costs that break the user's limits",
+      "done": false
+    },
+    {
+      "id": 17,
+      "step": "gate 4 risk check: flag plan steps that cost money, create cloud resources, or send data to an outside service",
+      "done": false
+    },
+    {
+      "id": 18,
+      "step": "worktree cleanup in /mtk:doctor: list old mtk/* worktrees and branches and offer to delete them",
+      "done": false
     }
   ]
 }

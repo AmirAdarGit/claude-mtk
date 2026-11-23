@@ -21,3 +21,4 @@ Next: discuss and build the new agent ideas (plan steps 15-18), memory-checker f
 - 2026-11-22: /mtk:style short and full ask for plain, simple English — the user reads English as a second language; technical words stay exact.
 - 2026-11-22: step 8 runs on a new practice project, not Alta — the user wants to practice AI agents and RAG.
 - 2026-11-22: /mtk:develop dispatches the agents (BUILD → tdd-implementer, REVIEW → quality-reviewer then adversarial-verifier) — before 0.3.7 the main session wrote and graded its own code, so the model split and no-writes.sh never applied in develop.
+- 2026-11-23: /mtk:develop needs no verify-gate (step 8 closed) — in 3 Dev Brain runs (spike, slice 1, slice 2) gate 5 ran verify.sh in the worktree every time and showed the output; the verify-gate stays for /mtk:chore only.

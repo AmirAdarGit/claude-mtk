@@ -38,7 +38,7 @@
     {
       "id": 8,
       "step": "Decide whether /mtk:develop also needs the verify-gate",
-      "done": false
+      "done": true
     },
     {
       "id": 9,

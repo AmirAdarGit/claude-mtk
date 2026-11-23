@@ -66,3 +66,7 @@
 ## 2026-11-23 — agent ideas saved for a new chat
 - Decided: next mtk work = agents for checks that need judgment (memory-checker, spec-reviewer, gate-4 risk check) and a script for worktree cleanup; plan steps 15-18. Done already: secret guard (0.3.11), verifier maxTurns 30.
 - Open: step 8 still running on Dev Brain (slice 2 of about 7).
+## 2026-11-23 — step 8 closed: /mtk:develop tested on Dev Brain
+- Checked: 3 runs (voyage spike, slice 1, slice 2) — every gate asked; tdd-implementer, quality-reviewer and adversarial-verifier ran; reviews found real bugs and sent work back to build; slices 1 and 2 merged (114 tests).
+- Found and fixed: 0.3.8 second run warning, 0.3.9 heredoc false alarm, 0.3.10 memory in a worktree, 0.3.11 secret guard + verifier turns.
+- Decided: no verify-gate for develop — gate 5 already runs verify.sh every time.

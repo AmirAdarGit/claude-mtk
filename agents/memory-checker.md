@@ -55,6 +55,7 @@ Run every command as `git -C "$ROOT" ...` or `cd "$ROOT" && ...`.
    | `CANNOT CHECK` | git and the files cannot tell. Decisions, reasons, wishes of the user. |
 
    **Never write `OK` without proof.** If you have no proof, the label is `CANNOT CHECK`.
+   A heading or title line with no fact is CANNOT CHECK, not OK.
 
 4. **Use the script output like this:**
    - The script says `WRONG`: the line is `WRONG`.
@@ -79,7 +80,8 @@ One line per draft line:
 <LABEL> <file>: <the line, max 80 chars> — <proof>
 ```
 
-Put `WRONG` and `OLD` lines first. Then one summary line:
+Put `WRONG` and `OLD` lines first. Then one summary line. Write it exactly like this, and
+start it with the words `memory-checker:`. Replace W, O, C and K with the counts:
 
 ```
 memory-checker: W wrong, O old, C cannot check, K ok

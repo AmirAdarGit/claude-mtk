@@ -7,10 +7,11 @@
 #   memcheck.sh --dir <path>     which repo (default: the current folder)
 #
 # Four kinds of fact are checked:
-#   hash    7-40 hex characters with a digit   OK if the commit exists, else WRONG
+#   hash    7-40 hex, a digit and a letter a-f OK if the commit exists, else WRONG
 #   branch  mtk/*                              OK if it exists, OLD if only in git history, else NOT FOUND
 #   path    a repo file or folder              OK if it exists, OLD if only in git history, else NOT FOUND
-#   plan    "step 19", "steps 2-4", "[19]"     OK if plan.json has that id, else WRONG
+#   plan    "step 19", "steps 2-4", "[19]"     OK if plan.json has that id. A missing id is WRONG only
+#                                              for "plan step N" or inside plan.json, else NOT FOUND
 #
 # Output, one line per fact:  <LABEL> <kind> <token> — <reason> | <file>: <line start>
 # Only hash and plan facts can be WRONG. NOT FOUND means: git cannot tell, the reader must judge.
@@ -98,12 +99,15 @@ def main():
 
     # -- find the facts -----------------------------------------------------
     facts = {}     # (kind, token) -> (file, line), first one seen wins
+    plan_strict = set()   # plan ids that were named as "plan step N" (or sit in plan.json)
 
     def add(kind, token, file, line):
         facts.setdefault((kind, token), (file, line))
 
-    HASH = re.compile(r"(?<![\w/])[0-9a-f]{7,40}(?![\w/]|\.\w)")
+    # a hash has a digit AND a letter a-f (so dates, ports, timestamps are not hashes)
+    HASH = re.compile(r"(?<![\w/#])[0-9a-f]{7,40}(?![\w/]|\.\w)")
     BRANCH = re.compile(r"(?<![\w/.-])mtk/[A-Za-z0-9._-]+(?![A-Za-z0-9._/-])")
+    PLAN_STEP = re.compile(r"\bplan\s+steps?\s+#?(\d+)(?:\s*[-–]\s*(\d+))?", re.I)
     STEP = re.compile(r"\bsteps?\s+#?(\d+)(?:\s*[-–]\s*(\d+))?")
     BRACKET = re.compile(r"(?<![\w\]])\[(\d+)\](?!\()")
     TICKS = re.compile(r"`([^`\n]+)`")
@@ -142,16 +146,20 @@ def main():
 
     for file, line in lines:
         for m in HASH.finditer(line):
-            if any(c.isdigit() for c in m.group(0)):
+            h = m.group(0)
+            if any(c.isdigit() for c in h) and any(c in "abcdef" for c in h):
                 add("hash", m.group(0), file, line)
         for m in BRANCH.finditer(line):
             add("branch", m.group(0).rstrip(".-"), file, line)
-        for m in STEP.finditer(line):
-            a = int(m.group(1))
-            b = int(m.group(2)) if m.group(2) else a
-            if a <= b <= a + 50:
-                for n in range(a, b + 1):
-                    add("plan", f"step {n}", file, line)
+        for rx, strict_here in ((STEP, file == ".mtk/plan.json"), (PLAN_STEP, True)):
+            for m in rx.finditer(line):
+                a = int(m.group(1))
+                b = int(m.group(2)) if m.group(2) else a
+                if a <= b <= a + 50:
+                    for n in range(a, b + 1):
+                        add("plan", f"step {n}", file, line)
+                        if strict_here:
+                            plan_strict.add(f"step {n}")
         for m in BRACKET.finditer(line):
             add("plan", f"step {int(m.group(1))}", file, line)
         spans = [(t, True) for t in TICKS.findall(line)]
@@ -178,8 +186,13 @@ def main():
             for h, v in zip(hashes, verdicts):
                 if v.endswith(" missing"):
                     results[("hash", h)] = ("WRONG", "git has no such commit")
+                elif v.endswith(" ambiguous"):
+                    results[("hash", h)] = ("NOT FOUND", "ambiguous short hash")
                 else:
                     results[("hash", h)] = ("OK", "commit exists")
+        else:
+            facts[("hash", "-")] = facts[("hash", hashes[0])]
+            results[("hash", "-")] = ("NOT FOUND", "hash check failed")
 
     branches = [t for (k, t) in facts if k == "branch"]
     if branches:
@@ -217,18 +230,24 @@ def main():
         facts.setdefault(("path", p), (file, line))
 
     plan_ids = None
+    plan_facts = [(k, t) for (k, t) in facts if k == "plan"]
     try:
         with open(os.path.join(root, ".mtk", "plan.json"), encoding="utf-8") as f:
             plan_ids = {int(s["id"]) for s in json.load(f).get("steps", [])}
+    except FileNotFoundError:
+        plan_ids = None                       # no plan.json: plan ids are skipped
     except Exception:
-        plan_ids = None
+        if plan_facts:
+            facts[("plan", "-")] = facts[plan_facts[0]]
+            results[("plan", "-")] = ("NOT FOUND", "plan.json unreadable, plan ids not checked")
     if plan_ids is not None:
-        for (k, t) in facts:
-            if k == "plan":
-                if int(t.split()[1]) in plan_ids:
-                    results[(k, t)] = ("OK", "id is in plan.json")
-                else:
-                    results[(k, t)] = ("WRONG", "no such id in plan.json")
+        for (k, t) in plan_facts:
+            if int(t.split()[1]) in plan_ids:
+                results[(k, t)] = ("OK", "id is in plan.json")
+            elif t in plan_strict:
+                results[(k, t)] = ("WRONG", "no such id in plan.json")
+            else:
+                results[(k, t)] = ("NOT FOUND", "no such id in plan.json, but it may not mean a plan step")
 
     # -- print --------------------------------------------------------------
     rows = []

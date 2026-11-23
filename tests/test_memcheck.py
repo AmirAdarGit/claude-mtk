@@ -12,6 +12,7 @@ Run: python3 -m unittest discover -s tests -p test_memcheck.py
 import json
 import os
 import re
+import shutil
 import subprocess
 import time
 import unittest
@@ -68,10 +69,53 @@ class MemcheckTest(HookCase):
 
     # -- hash ---------------------------------------------------------------
     def test_hash_ok_and_wrong(self):
-        self.draft(f"Commit {self.good[:10]} is done; 1234abc was claimed.\n")
+        self.draft(f"Commit {self.good[:20]} is done; 1234abc was claimed.\n")
         out = self.run_check()
-        self.assertTrue(self.has(out, "OK", "hash", self.good[:10]), out)
+        self.assertTrue(self.has(out, "OK", "hash", self.good[:20]), out)
         self.assertTrue(self.has(out, "WRONG", "hash", "1234abc"), out)
+
+    def test_numbers_and_colours_are_not_hashes(self):
+        self.draft("Date 20261123, port 1234567, time 1700000000, phone 0501234567, colour #ff000080.\n")
+        out = self.run_check()
+        self.assertIn("no facts to check", out)
+
+    def test_hash_starting_with_a_digit_is_still_a_hash(self):
+        self.draft("Claimed 0e3d1e2 here.\n")
+        out = self.run_check()
+        self.assertTrue(self.has(out, "WRONG", "hash", "0e3d1e2"), out)
+
+    def fake_git(self, body):
+        """A `git` on PATH that fakes `cat-file --batch-check` and runs the real git otherwise."""
+        real = shutil.which("git")
+        d = os.path.join(self.tmp, "fakebin")
+        os.makedirs(d, exist_ok=True)
+        path = os.path.join(d, "git")
+        with open(path, "w") as f:
+            f.write('#!/bin/sh\ncase " $* " in *" --batch-check "*)\n' + body + '\nexit 0;; esac\nexec ' + real + ' "$@"\n')
+        os.chmod(path, 0o755)
+        self.env["PATH"] = d + os.pathsep + self.env["PATH"]
+
+    def test_ambiguous_short_hash_is_not_found(self):
+        self.fake_git('while read l; do echo "$l ambiguous"; done')
+        self.draft("Claimed 1234abc here.\n")
+        out = self.run_check()
+        self.assertTrue(self.has(out, "NOT FOUND", "hash", "1234abc"), out)
+        self.assertIn("ambiguous short hash", out)
+
+    def test_failed_hash_check_is_reported(self):
+        self.fake_git("cat >/dev/null")
+        self.draft("Claimed 1234abc here.\n")
+        out = self.run_check()
+        self.assertTrue(self.has(out, "NOT FOUND", "hash", "-"), out)
+        self.assertIn("hash check failed", out)
+
+    def test_unreadable_plan_json_is_reported(self):
+        with open(os.path.join(self.r, ".mtk", "plan.json"), "w") as f:
+            f.write("{not json")
+        self.draft("Next is step 2.\n")
+        out = self.run_check()
+        self.assertTrue(self.has(out, "NOT FOUND", "plan", "-"), out)
+        self.assertIn("plan.json unreadable, plan ids not checked", out)
 
     def test_words_are_not_hashes(self):
         self.draft("We added deadbeef and facade here.\n")
@@ -139,15 +183,29 @@ class MemcheckTest(HookCase):
 
     # -- plan ids -----------------------------------------------------------
     def test_plan_ids(self):
-        self.draft("Next is step 2 and later step 19, also [3] and [20].\n")
+        self.draft("Next is step 2 and later plan step 19, also [3] and [20].\n")
         out = self.run_check()
         self.assertTrue(self.has(out, "OK", "plan", "step 2"), out)
         self.assertTrue(self.has(out, "WRONG", "plan", "step 19"), out)
         self.assertTrue(self.has(out, "OK", "plan", "step 3"), out)
-        self.assertTrue(self.has(out, "WRONG", "plan", "step 20"), out)
+        self.assertTrue(self.has(out, "NOT FOUND", "plan", "step 20"), out)
+
+    def test_prose_step_that_is_missing_is_not_wrong(self):
+        self.draft("We did step 19 of the migration, see footnote [21].\n")
+        out = self.run_check()
+        self.assertTrue(self.has(out, "NOT FOUND", "plan", "step 19"), out)
+        self.assertTrue(self.has(out, "NOT FOUND", "plan", "step 21"), out)
+        self.assertNotIn("WRONG", out.replace("0 wrong", ""))
+
+    def test_any_missing_id_in_plan_json_itself_is_wrong(self):
+        self.draft("", name="plan.json")
+        with open(os.path.join(self.r, ".mtk", "plan.json"), "w") as f:
+            json.dump({"steps": PLAN3["steps"] + [{"id": 4, "step": "see step 9", "done": False}]}, f)
+        out = self.run_check()
+        self.assertTrue(self.has(out, "WRONG", "plan", "step 9"), out)
 
     def test_plan_id_range(self):
-        self.draft("Done in steps 2-4.\n")
+        self.draft("Done in plan steps 2-4.\n")
         out = self.run_check()
         self.assertTrue(self.has(out, "OK", "plan", "step 2"), out)
         self.assertTrue(self.has(out, "WRONG", "plan", "step 4"), out)
@@ -172,9 +230,9 @@ class MemcheckTest(HookCase):
         self.assertTrue(self.has(out, "NOT FOUND", "path", "src/stale-nope.py"), out)
 
     def test_untracked_new_mtk_file_counts_as_added(self):
-        self.draft("Wrong hash 7654321 here.\n", name="log.md")   # log.md is not in HEAD
+        self.draft("Wrong hash 7654abc here.\n", name="log.md")   # log.md is not in HEAD
         out = self.run_check()
-        self.assertTrue(self.has(out, "WRONG", "hash", "7654321"), out)
+        self.assertTrue(self.has(out, "WRONG", "hash", "7654abc"), out)
 
     def test_no_changes_means_no_facts(self):
         out = self.run_check()
@@ -216,7 +274,7 @@ class MemcheckTest(HookCase):
         self.assertEqual(out.strip(), "memcheck: not a git repo")
 
     def test_many_facts_are_capped_and_fast(self):
-        self.draft("".join(f"Claim {1000000 + i} ok, `src/missing{i}.py`, mtk/nope{i}.\n" for i in range(300)))
+        self.draft("".join(f"Claim {i:04x}abc ok, `src/missing{i}.py`, mtk/nope{i}.\n" for i in range(300)))
         out = self.run_check()
         self.assertLessEqual(len(out), 4000, len(out))
         self.assertLess(self.elapsed, 1.0)
@@ -224,7 +282,7 @@ class MemcheckTest(HookCase):
         self.assertRegex(out.splitlines()[-1], r"^memcheck: 300 wrong, 600 not found, 0 old, 0 ok$")
 
     def test_normal_run_is_fast(self):
-        self.draft("`src/a.py` mtk/real step 2 " + self.good[:8] + "\n")
+        self.draft("`src/a.py` mtk/real step 2 " + self.good[:20] + "\n")
         self.run_check()
         self.assertLess(self.elapsed, 1.0)
 
@@ -250,6 +308,18 @@ class HandoffCommandTest(unittest.TestCase):
         self.assertNotIn("above this agent file", agent)
         self.assertIn("memcheck.sh not found", agent)
         self.assertIn("DONE_WITH_CONCERNS", agent)
+
+    def test_handoff_runs_the_checker_again_after_fixing(self):
+        start = self.text.index("## 3. Check")
+        section = self.text[start:self.text.index("## 4.")]
+        self.assertIn("dispatch the agent again once", section)
+
+    def test_agent_text_on_headings_and_summary_format(self):
+        with open(os.path.join(ROOT, "agents", "memory-checker.md")) as f:
+            agent = f.read()
+        self.assertIn("A heading or title line with no fact is CANNOT CHECK, not OK.", agent)
+        self.assertIn("memory-checker: W wrong, O old, C cannot check, K ok", agent)
+        self.assertIn("exactly", agent)
 
     def test_hooks_json_names_the_three_read_only_agents(self):
         with open(os.path.join(ROOT, "hooks", "hooks.json")) as f:

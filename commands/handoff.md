@@ -97,7 +97,8 @@ Claude often writes wrong facts. Check the draft against git before the user see
    Script: ${CLAUDE_PLUGIN_ROOT}/scripts/memcheck.sh
    ```
 2. Show its `WRONG` and `OLD` lines.
-3. Fix each `WRONG` and `OLD` line in the files, or remove it. Then show the labels again.
+3. Fix each `WRONG` and `OLD` line in the files, or remove it. Then dispatch the agent again once,
+   and show the new labels.
 4. Show the `CANNOT CHECK` lines to the user as "only you can check these".
 
 If the agent cannot be dispatched, say so in one line and go on to the next section.

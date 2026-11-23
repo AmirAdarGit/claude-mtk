@@ -2,7 +2,7 @@
 
 Goal: make mtk a small Claude Code harness that enforces its rules in code, built from problems found on real work (Track B of the plan).
 
-Next: discuss and build the new agent ideas (plan steps 15-18), memory-checker first. Evidence from 2026-11-23: 3 Dev Brain handoffs each had wrong lines; two gate-4 plans had risky actions (Atlas creation via MCP, Alta data to Voyage). Step 8 (Dev Brain test) continues in the Dev Brain session.
+Next: restart Claude Code so mtk 0.3.12 loads, then run the next /mtk:handoff as the first live test of mtk:memory-checker (check that it is dispatched and its labels look right). Then build plan step 17 (gate 4 risk check).
 
 ## Decisions
 - 2026-11-22: agents pinned to models (implementer/reviewer `sonnet`, verifier `opus`) — save limits; a different model checks the code.
@@ -22,3 +22,4 @@ Next: discuss and build the new agent ideas (plan steps 15-18), memory-checker f
 - 2026-11-22: step 8 runs on a new practice project, not Alta — the user wants to practice AI agents and RAG.
 - 2026-11-22: /mtk:develop dispatches the agents (BUILD → tdd-implementer, REVIEW → quality-reviewer then adversarial-verifier) — before 0.3.7 the main session wrote and graded its own code, so the model split and no-writes.sh never applied in develop.
 - 2026-11-23: /mtk:develop needs no verify-gate (step 8 closed) — in 3 Dev Brain runs (spike, slice 1, slice 2) gate 5 ran verify.sh in the worktree every time and showed the output; the verify-gate stays for /mtk:chore only.
+- 2026-11-23: memory-checker = memcheck.sh + agent — the script proves only hashes and "plan step N" (WRONG); paths and branches are NOT FOUND for the agent to judge, because paths gave 24 false WRONG on real memory.

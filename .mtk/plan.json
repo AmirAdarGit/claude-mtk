@@ -73,7 +73,7 @@
     {
       "id": 15,
       "step": "memory-checker agent: /mtk:handoff dispatches it before asking the user; it checks each .mtk/ line against git log, worktrees and the plan (read-only, sonnet)",
-      "done": false
+      "done": true
     },
     {
       "id": 16,

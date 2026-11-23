@@ -70,3 +70,9 @@
 - Checked: 3 runs (voyage spike, slice 1, slice 2) — every gate asked; tdd-implementer, quality-reviewer and adversarial-verifier ran; reviews found real bugs and sent work back to build; slices 1 and 2 merged (114 tests).
 - Found and fixed: 0.3.8 second run warning, 0.3.9 heredoc false alarm, 0.3.10 memory in a worktree, 0.3.11 secret guard + verifier turns.
 - Decided: no verify-gate for develop — gate 5 already runs verify.sh every time.
+
+## 2026-11-23 — 0.3.12: memory-checker agent (plan step 15)
+- Done: scripts/memcheck.sh checks draft .mtk/ lines (hashes, mtk/* branches, paths, plan ids) against git; agents/memory-checker.md (sonnet, read-only via no-writes.sh and strikes.sh) labels each line OK/WRONG/OLD/CANNOT CHECK; commands/handoff.md section 3 dispatches it before asking. 94 tests. Merge 31880d5.
+- Found: first design gave 26 false WRONG on real memory (paths like sed/cut, 5/6); reviewer and verifier then found false WRONG for dates, prose "step N", ObjectIds and UUID tails. All fixed test-first; real memory of mtk and Dev Brain now 0 WRONG.
+- Live run (agent text on sonnet, planted repo): all 7 expected labels matched.
+- Open: real mtk:memory-checker not yet run in a handoff; a bare hex id that is not a commit (colour, token) still gets WRONG; handoff.md says "commit there" and "Do not commit".

@@ -43,6 +43,11 @@ class MemcheckTest(HookCase):
         self.good = subprocess.run(["git", "-C", r, "rev-parse", "HEAD"], capture_output=True).stdout.decode().strip()
 
     # -- helpers ------------------------------------------------------------
+    def short(self):
+        """A real short hash (7-12 chars) that has a digit and a letter."""
+        return next(self.good[:n] for n in range(7, 13)
+                    if re.search("[a-f]", self.good[:n]) and re.search("[0-9]", self.good[:n]))
+
     def draft(self, text, name="now.md"):
         """Add uncommitted lines to a .mtk/ file."""
         full = os.path.join(self.r, ".mtk", name)
@@ -69,15 +74,28 @@ class MemcheckTest(HookCase):
 
     # -- hash ---------------------------------------------------------------
     def test_hash_ok_and_wrong(self):
-        self.draft(f"Commit {self.good[:20]} is done; 1234abc was claimed.\n")
+        self.draft(f"Commit {self.short()} is done; 1234abc was claimed.\n")
         out = self.run_check()
-        self.assertTrue(self.has(out, "OK", "hash", self.good[:20]), out)
+        self.assertTrue(self.has(out, "OK", "hash", self.short()), out)
         self.assertTrue(self.has(out, "WRONG", "hash", "1234abc"), out)
 
     def test_numbers_and_colours_are_not_hashes(self):
         self.draft("Date 20261123, port 1234567, time 1700000000, phone 0501234567, colour #ff000080.\n")
         out = self.run_check()
         self.assertIn("no facts to check", out)
+
+    def test_other_ids_and_tags_are_not_hashes(self):
+        self.draft("Ids 6566f1a2b3c4d5e6f7a8b9c0 and d41d8cd98f00b204e9800998ecf8427e,"
+                   " tags abc1234:latest and abc1234-dirty,"
+                   " uuid 123e4567-e89b-12d3-a456-426614174000.\n")
+        out = self.run_check()
+        self.assertIn("no facts to check", out)
+
+    def test_a_40_char_hash_and_a_7_char_hash_are_checked(self):
+        self.draft(f"Full {self.good}, short {self.short()[:7]}, fake abcdef1.\n")
+        out = self.run_check()
+        self.assertTrue(self.has(out, "OK", "hash", self.good), out)
+        self.assertTrue(self.has(out, "WRONG", "hash", "abcdef1"), out)
 
     def test_hash_starting_with_a_digit_is_still_a_hash(self):
         self.draft("Claimed 0e3d1e2 here.\n")
@@ -197,11 +215,14 @@ class MemcheckTest(HookCase):
         self.assertTrue(self.has(out, "NOT FOUND", "plan", "step 21"), out)
         self.assertNotIn("WRONG", out.replace("0 wrong", ""))
 
-    def test_any_missing_id_in_plan_json_itself_is_wrong(self):
-        self.draft("", name="plan.json")
+    def test_plan_json_text_is_prose_too(self):
         with open(os.path.join(self.r, ".mtk", "plan.json"), "w") as f:
-            json.dump({"steps": PLAN3["steps"] + [{"id": 4, "step": "see step 9", "done": False}]}, f)
+            json.dump({"steps": PLAN3["steps"] + [
+                {"id": 4, "step": "step 0: set up", "done": False},
+                {"id": 5, "step": "Step 8: and see plan step 9", "done": False}]}, f)
         out = self.run_check()
+        self.assertTrue(self.has(out, "NOT FOUND", "plan", "step 0"), out)
+        self.assertTrue(self.has(out, "NOT FOUND", "plan", "step 8"), out)
         self.assertTrue(self.has(out, "WRONG", "plan", "step 9"), out)
 
     def test_plan_id_range(self):
@@ -282,7 +303,7 @@ class MemcheckTest(HookCase):
         self.assertRegex(out.splitlines()[-1], r"^memcheck: 300 wrong, 600 not found, 0 old, 0 ok$")
 
     def test_normal_run_is_fast(self):
-        self.draft("`src/a.py` mtk/real step 2 " + self.good[:20] + "\n")
+        self.draft("`src/a.py` mtk/real step 2 " + self.good + "\n")
         self.run_check()
         self.assertLess(self.elapsed, 1.0)
 
@@ -308,6 +329,19 @@ class HandoffCommandTest(unittest.TestCase):
         self.assertNotIn("above this agent file", agent)
         self.assertIn("memcheck.sh not found", agent)
         self.assertIn("DONE_WITH_CONCERNS", agent)
+
+    def test_handoff_never_removes_cannot_check_lines(self):
+        start = self.text.index("## 3. Check")
+        section = self.text[start:self.text.index("## 4.")]
+        self.assertIn("Fix WRONG and OLD lines. Never remove a CANNOT CHECK line; show it to the user.", section)
+
+    def test_agent_rules_for_other_repos_and_plan_ids(self):
+        with open(os.path.join(ROOT, "agents", "memory-checker.md")) as f:
+            agent = f.read()
+        self.assertIn("fact from another repo", agent)
+        self.assertIn("never `OK` and never removed", agent)
+        self.assertIn("it is a step of something else", agent)
+        self.assertIn("this project's plan step, it is `WRONG`", agent)
 
     def test_handoff_runs_the_checker_again_after_fixing(self):
         start = self.text.index("## 3. Check")

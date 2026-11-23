@@ -7,11 +7,11 @@
 #   memcheck.sh --dir <path>     which repo (default: the current folder)
 #
 # Four kinds of fact are checked:
-#   hash    7-40 hex, a digit and a letter a-f OK if the commit exists, else WRONG
+#   hash    7-12 or 40 hex, digit and a-f      OK if the commit exists, else WRONG
 #   branch  mtk/*                              OK if it exists, OLD if only in git history, else NOT FOUND
 #   path    a repo file or folder              OK if it exists, OLD if only in git history, else NOT FOUND
 #   plan    "step 19", "steps 2-4", "[19]"     OK if plan.json has that id. A missing id is WRONG only
-#                                              for "plan step N" or inside plan.json, else NOT FOUND
+#                                              for "plan step N", else NOT FOUND
 #
 # Output, one line per fact:  <LABEL> <kind> <token> — <reason> | <file>: <line start>
 # Only hash and plan facts can be WRONG. NOT FOUND means: git cannot tell, the reader must judge.
@@ -99,16 +99,17 @@ def main():
 
     # -- find the facts -----------------------------------------------------
     facts = {}     # (kind, token) -> (file, line), first one seen wins
-    plan_strict = set()   # plan ids that were named as "plan step N" (or sit in plan.json)
+    plan_strict = set()   # plan ids that were named as "plan step N"
 
     def add(kind, token, file, line):
         facts.setdefault((kind, token), (file, line))
 
-    # a hash has a digit AND a letter a-f (so dates, ports, timestamps are not hashes)
-    HASH = re.compile(r"(?<![\w/#])[0-9a-f]{7,40}(?![\w/]|\.\w)")
+    # A git hash: 7-12 or exactly 40 hex characters, with a digit AND a letter a-f. That drops
+    # dates, ports, timestamps, ObjectIds (24) and MD5 (32), and `abc1234:latest`, `abc1234-dirty`.
+    HASH = re.compile(r"(?<![\w/#:])[0-9a-f]{7,40}(?![\w/:-]|\.\w)")
     BRANCH = re.compile(r"(?<![\w/.-])mtk/[A-Za-z0-9._-]+(?![A-Za-z0-9._/-])")
     PLAN_STEP = re.compile(r"\bplan\s+steps?\s+#?(\d+)(?:\s*[-–]\s*(\d+))?", re.I)
-    STEP = re.compile(r"\bsteps?\s+#?(\d+)(?:\s*[-–]\s*(\d+))?")
+    STEP = re.compile(r"\bsteps?\s+#?(\d+)(?:\s*[-–]\s*(\d+))?", re.I)
     BRACKET = re.compile(r"(?<![\w\]])\[(\d+)\](?!\()")
     TICKS = re.compile(r"`([^`\n]+)`")
     SPLIT = re.compile(r"""[\s()\[\]{}"',;|]+""")
@@ -147,11 +148,11 @@ def main():
     for file, line in lines:
         for m in HASH.finditer(line):
             h = m.group(0)
-            if any(c.isdigit() for c in h) and any(c in "abcdef" for c in h):
+            if (len(h) <= 12 or len(h) == 40) and any(c.isdigit() for c in h) and any(c in "abcdef" for c in h):
                 add("hash", m.group(0), file, line)
         for m in BRANCH.finditer(line):
             add("branch", m.group(0).rstrip(".-"), file, line)
-        for rx, strict_here in ((STEP, file == ".mtk/plan.json"), (PLAN_STEP, True)):
+        for rx, strict_here in ((STEP, False), (PLAN_STEP, True)):
             for m in rx.finditer(line):
                 a = int(m.group(1))
                 b = int(m.group(2)) if m.group(2) else a

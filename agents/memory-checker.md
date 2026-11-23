@@ -58,12 +58,17 @@ Run every command as `git -C "$ROOT" ...` or `cd "$ROOT" && ...`.
    A heading or title line with no fact is CANNOT CHECK, not OK.
 
 4. **Use the script output like this:**
-   - The script says `WRONG`: the line is `WRONG`.
+   - The script says `WRONG`: the line is `WRONG`. One exception: the line clearly names
+     another repo or project for that hash or plan step ("mtk", "Dev Brain", another path).
+     Then label it `CANNOT CHECK` with the reason "fact from another repo".
+     It is never `OK` and never removed.
    - The script says `NOT FOUND`: you judge, from the line.
      - A short name such as `now.md` may mean `.mtk/now.md`. Check it.
      - A name in another repo, or a branch that was merged fast-forward and deleted,
        may be fine. Check `git -C "$ROOT" reflog`. Label it `OK` with proof, or `CANNOT CHECK`.
      - A path that was made up is `WRONG`.
+     - A plan id, "step N" with no such id: read the line. If it means this project's plan step, it is `WRONG`.
+       If it is a step of something else (a migration, a recipe, another project's plan), it is `CANNOT CHECK`.
    - The script says `OLD` or `OK`: read the line, then label it.
 
 5. **Extra checks the script cannot do:**

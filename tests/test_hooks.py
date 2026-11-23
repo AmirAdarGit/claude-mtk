@@ -313,6 +313,12 @@ class StrikesTest(HookCase):
         self.fail("npm test", "error A")
         self.assertIsNone(self.check("npm test"))
 
+    def test_memory_checker_failures_are_counted(self):
+        for _ in range(3):
+            self.hook("strikes.sh", "record", payload=self.payload("make", 1, "boom", agent="mtk:memory-checker"))
+        _, d = self.hook("strikes.sh", "check", payload=self.payload("make", agent="mtk:memory-checker"))
+        self.assertEqual(d["hookSpecificOutput"]["permissionDecision"], "deny")
+
     def test_your_own_commands_are_never_counted(self):
         for _ in range(4):
             self.hook("strikes.sh", "record", payload=self.payload("npm test", 1, "FAIL", agent=None))
@@ -371,6 +377,11 @@ class NoWritesTest(HookCase):
     def test_both_reviewer_agents_are_read_only(self):
         self.assertEqual(self.decision("rm x", agent="mtk:adversarial-verifier"), "deny")
 
+    def test_memory_checker_is_read_only(self):
+        self.assertEqual(self.decision("echo x > file", agent="mtk:memory-checker"), "deny")
+        self.assertEqual(self.decision("rm x", agent="mtk:memory-checker"), "deny")
+        self.assertIsNone(self.decision("git diff HEAD -- .mtk/", agent="mtk:memory-checker"))
+
     def test_other_agents_and_your_own_commands_are_not_touched(self):
         self.assertIsNone(self.decision("rm x", agent="mtk:tdd-implementer"))
         self.assertIsNone(self.decision("rm x", agent=None))
@@ -404,6 +415,25 @@ class NoWritesTest(HookCase):
         self.hook("no-writes.sh", payload=p)
         out, _ = self.hook("no-writes.sh", "after", payload=p)
         self.assertEqual(out, "")
+
+
+# ── agents/memory-checker.md ────────────────────────────────────────────────
+class MemoryCheckerAgentTest(unittest.TestCase):
+    def frontmatter(self):
+        with open(os.path.join(ROOT, "agents", "memory-checker.md")) as f:
+            text = f.read()
+        head = text.split("---")[1]
+        return dict(l.split(":", 1) for l in head.strip().splitlines() if ":" in l and not l.startswith(" "))
+
+    def test_model_and_tools(self):
+        fm = self.frontmatter()
+        self.assertEqual(fm["name"].strip(), "memory-checker")
+        self.assertEqual(fm["model"].strip(), "sonnet")
+        tools = [t.strip() for t in fm["tools"].split(",")]
+        self.assertEqual(tools, ["Read", "Bash", "Grep", "Glob"])
+        for banned in ("Write", "Edit", "MultiEdit", "NotebookEdit"):
+            self.assertNotIn(banned, tools)
+            self.assertIn(banned, fm["disallowedTools"])
 
 
 if __name__ == "__main__":

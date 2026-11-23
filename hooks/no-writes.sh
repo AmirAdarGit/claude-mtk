@@ -1,6 +1,6 @@
 #!/usr/bin/env sh
 #
-# mtk no-writes — the two reviewer agents really are read-only.
+# mtk no-writes — the read-only agents (two reviewers and memory-checker) really are read-only.
 #
 #   no-writes.sh          PreToolUse (Bash): deny a known writing command; else
 #                         remember the files as they are now
@@ -9,7 +9,7 @@
 #
 # Wired in hooks/hooks.json for every Bash call. It acts only when the call comes
 # from a read-only agent: the hook input's "agent_type" is one of MTK_READONLY_AGENTS
-# (default: mtk:quality-reviewer mtk:adversarial-verifier). Your own commands and
+# (default: mtk:quality-reviewer mtk:adversarial-verifier mtk:memory-checker). Your own commands and
 # tdd-implementer's are never touched.
 #
 # WHY THIS EXISTS
@@ -43,7 +43,7 @@ set -u
 
 MODE="${1:-check}"
 PAYLOAD=$(cat)
-AGENTS="${MTK_READONLY_AGENTS:-mtk:quality-reviewer mtk:adversarial-verifier}"
+AGENTS="${MTK_READONLY_AGENTS:-mtk:quality-reviewer mtk:adversarial-verifier mtk:memory-checker}"
 
 # Fast exit for every Bash call that is not from a read-only agent: no python.
 hit=0

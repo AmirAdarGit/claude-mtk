@@ -72,7 +72,7 @@ checked in DESIGN, not redone.
 | 2 | `verify` skill | done |
 | 3 | `quality-gates` skill | done |
 | 4 | `development-pipeline` — 4 phases | done |
-| 5 | agents: tdd-implementer, quality-reviewer, adversarial-verifier | done |
+| 5 | agents: tdd-implementer, quality-reviewer, adversarial-verifier, memory-checker | done |
 | 6 | remaining commands | done |
 | 7 | use it on real work, fix what annoys | ongoing |
 | 8 | pipeline grows to 6 phases: DESIGN, HYPOTHESIZE, and four task modes | done, not yet run on real work |
@@ -231,8 +231,8 @@ Seven scripts, seven different jobs, all wired in `hooks/hooks.json`.
 | `style.sh` | adds the chosen answer style | `hooks/hooks.json` | whole plugin |
 | `verify-gate.sh` | blocks a chore from finishing until `verify.sh` checked the files | `hooks/hooks.json` | sessions that ran a chore |
 | `memory.sh` | shows the memory at start and after compaction; stops once for `/mtk:handoff` after a commit or at 70% context | `hooks/hooks.json` | whole plugin |
-| `no-writes.sh` | denies writing Bash commands, and catches any file change after a command | `hooks/hooks.json` | 2 reviewer agents (by `agent_type`) |
-| `strikes.sh` | denies a command that keeps failing | `hooks/hooks.json` | all 3 agents (by `agent_type`) |
+| `no-writes.sh` | denies writing Bash commands, and catches any file change after a command | `hooks/hooks.json` | 3 read-only agents (by `agent_type`) |
+| `strikes.sh` | denies a command that keeps failing | `hooks/hooks.json` | all 4 agents (by `agent_type`) |
 | `secret-guard.sh` | denies a command that would print a secret (`cat .env`, `echo $API_KEY`, `printenv`) | `hooks/hooks.json` | every session and agent |
 
 `no-writes.sh` and `strikes.sh` run on every Bash call but act only when the hook input's

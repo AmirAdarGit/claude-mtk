@@ -81,10 +81,32 @@ Next: <one step, concrete enough to start without asking>
 
    At most 6 lines. Facts a later session can act on, not a diary.
 
-## 3. Ask the user — always
+## 3. Check — memory-checker
+
+Claude often writes wrong facts. Check the draft against git before the user sees it.
+
+1. Dispatch the `mtk:memory-checker` agent. It is read-only. It labels every added line
+   `OK`, `WRONG`, `OLD` or `CANNOT CHECK`, with proof. The agent cannot know the plugin
+   folder, so the brief must hold two things: `ROOT`, and the script path written
+   literally as `${CLAUDE_PLUGIN_ROOT}/scripts/memcheck.sh` (Claude Code fills in the real
+   path). Example brief:
+
+   ```text
+   Check the draft .mtk/ lines.
+   ROOT: <the main folder path>
+   Script: ${CLAUDE_PLUGIN_ROOT}/scripts/memcheck.sh
+   ```
+2. Show its `WRONG` and `OLD` lines.
+3. Fix WRONG and OLD lines. Never remove a CANNOT CHECK line; show it to the user.
+   Then dispatch the agent again once, and show the new labels.
+4. Show the `CANNOT CHECK` lines to the user as "only you can check these".
+
+If the agent cannot be dispatched, say so in one line and go on to the next section.
+
+## 4. Ask the user — always
 
 Show the new **Goal**, **Next**, the plan steps you marked done, and the new log
-entry. Then call `AskUserQuestion`:
+entry, together with the labels from the check. Then call `AskUserQuestion`:
 
 - "Correct — keep it" (Recommended)
 - "Something is missing or wrong" — then ask what, fix it, and ask again
@@ -92,7 +114,7 @@ entry. Then call `AskUserQuestion`:
 You wrote this from your own view of the session. The user is the only check that
 it is complete. Do not skip this question.
 
-## 4. Then
+## 5. Then
 
 Show `git diff --stat -- .mtk/`. Do not commit: these files are committed with
 the user's next commit, like any other file.

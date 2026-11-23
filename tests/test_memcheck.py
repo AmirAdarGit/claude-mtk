@@ -11,6 +11,7 @@ Run: python3 -m unittest discover -s tests -p test_memcheck.py
 
 import json
 import os
+import re
 import subprocess
 import time
 
@@ -58,7 +59,11 @@ class MemcheckTest(HookCase):
         return any(l.startswith(f"{label} {kind} {token} ") for l in out.splitlines())
 
     def any_line(self, out, kind, token):
-        return any(l.split(" ")[:3][1:] == [kind, token] for l in out.splitlines() if l.split(" ")[0] in ("OK", "OLD", "WRONG"))
+        for l in out.splitlines():
+            m = re.match(r"(WRONG|NOT FOUND|OLD|OK) (\S+) (\S+) ", l)
+            if m and (m.group(2), m.group(3)) == (kind, token):
+                return True
+        return False
 
     # -- hash ---------------------------------------------------------------
     def test_hash_ok_and_wrong(self):
@@ -80,7 +85,7 @@ class MemcheckTest(HookCase):
         out = self.run_check()
         self.assertTrue(self.has(out, "OK", "branch", "mtk/real"), out)
         self.assertTrue(self.has(out, "OLD", "branch", "mtk/merged-gone"), out)
-        self.assertTrue(self.has(out, "WRONG", "branch", "mtk/never"), out)
+        self.assertTrue(self.has(out, "NOT FOUND", "branch", "mtk/never"), out)
 
     # -- path ---------------------------------------------------------------
     def test_path_three_states(self):
@@ -88,18 +93,39 @@ class MemcheckTest(HookCase):
         out = self.run_check()
         self.assertTrue(self.has(out, "OK", "path", "src/a.py"), out)
         self.assertTrue(self.has(out, "OLD", "path", "src/old.py"), out)
-        self.assertTrue(self.has(out, "WRONG", "path", "src/nope.py"), out)
+        self.assertTrue(self.has(out, "NOT FOUND", "path", "src/nope.py"), out)
 
     def test_path_line_number_suffix_is_stripped(self):
         self.draft("See `src/a.py:12` now.\n")
         out = self.run_check()
         self.assertTrue(self.has(out, "OK", "path", "src/a.py"), out)
 
-    def test_bare_word_without_slash_is_never_wrong(self):
+    def test_bare_word_without_slash_is_skipped(self):
         self.draft("The nothere.py file and bare/nothere.py both.\n")
         out = self.run_check()
         self.assertFalse(self.any_line(out, "path", "nothere.py"), out)
-        self.assertTrue(self.has(out, "WRONG", "path", "bare/nothere.py"), out)
+        self.assertTrue(self.has(out, "NOT FOUND", "path", "bare/nothere.py"), out)
+
+    def test_backticked_name_needs_an_allowed_extension(self):
+        self.draft("See `nothere.py` and `thing.xyz` and `speaker.name`.\n")
+        out = self.run_check()
+        self.assertTrue(self.has(out, "NOT FOUND", "path", "nothere.py"), out)
+        self.assertFalse(self.any_line(out, "path", "thing.xyz"), out)
+        self.assertFalse(self.any_line(out, "path", "speaker.name"), out)
+
+    def test_slash_token_needs_extension_or_existing_first_segment(self):
+        self.draft("Dirs `src/gone-dir` and `nodir/gone-dir` and `src/` here.\n")
+        out = self.run_check()
+        self.assertTrue(self.has(out, "NOT FOUND", "path", "src/gone-dir"), out)
+        self.assertFalse(self.any_line(out, "path", "nodir/gone-dir"), out)
+        self.assertTrue(self.has(out, "OK", "path", "src"), out)
+
+    def test_noise_tokens_give_no_result(self):
+        self.draft("Words sed/cut and 5/6 and 429/5xx and speaker.name and .md here;"
+                   " also `sed/cut` `5/6` `speaker.name` `.md` `segments[].text`"
+                   " and implementer/reviewer.\n")
+        out = self.run_check()
+        self.assertEqual(out.strip(), "memcheck: no facts to check")
 
     def test_skipped_paths_give_no_result(self):
         self.draft("Skip `~/.claude/x.md` and <encoded-path>/a.md and `<encoded-path>/b.md`"
@@ -135,14 +161,14 @@ class MemcheckTest(HookCase):
     def test_default_reads_only_added_lines(self):
         self.draft("Added line with `src/nope.py`.\n")
         out = self.run_check()
-        self.assertTrue(self.has(out, "WRONG", "path", "src/nope.py"), out)
+        self.assertTrue(self.has(out, "NOT FOUND", "path", "src/nope.py"), out)
         self.assertFalse(self.any_line(out, "path", "src/stale-nope.py"), out)
 
     def test_all_reads_whole_files(self):
         self.draft("Added line with `src/nope.py`.\n")
         out = self.run_check("--all")
-        self.assertTrue(self.has(out, "WRONG", "path", "src/nope.py"), out)
-        self.assertTrue(self.has(out, "WRONG", "path", "src/stale-nope.py"), out)
+        self.assertTrue(self.has(out, "NOT FOUND", "path", "src/nope.py"), out)
+        self.assertTrue(self.has(out, "NOT FOUND", "path", "src/stale-nope.py"), out)
 
     def test_untracked_new_mtk_file_counts_as_added(self):
         self.draft("Wrong hash 7654321 here.\n", name="log.md")   # log.md is not in HEAD
@@ -156,30 +182,30 @@ class MemcheckTest(HookCase):
     def test_dir_flag_and_other_cwd(self):
         self.draft("Wrong `src/nope.py`.\n")
         out = self.run_check("--dir", self.r, cwd=self.tmp)
-        self.assertTrue(self.has(out, "WRONG", "path", "src/nope.py"), out)
+        self.assertTrue(self.has(out, "NOT FOUND", "path", "src/nope.py"), out)
 
     def test_linked_worktree_reads_the_main_folder(self):
         wt = os.path.join(self.tmp, "wt")
         self.git(self.r, "worktree", "add", "-q", "-b", "side", wt)
         self.draft("Wrong `src/nope.py`.\n")           # drafted in the main folder
         out = self.run_check(cwd=wt)
-        self.assertTrue(self.has(out, "WRONG", "path", "src/nope.py"), out)
+        self.assertTrue(self.has(out, "NOT FOUND", "path", "src/nope.py"), out)
 
     # -- output shape -------------------------------------------------------
     def test_order_line_format_and_summary(self):
         self.draft("`src/a.py` `src/old.py` `src/nope.py`\n")
         out = self.run_check()
         lines = out.splitlines()
-        labels = [l.split(" ")[0] for l in lines[:-1]]
-        self.assertEqual(labels, ["WRONG", "OLD", "OK"], out)
+        labels = [re.match(r"(WRONG|NOT FOUND|OLD|OK) ", l).group(1) for l in lines[:-1]]
+        self.assertEqual(labels, ["NOT FOUND", "OLD", "OK"], out)
         self.assertIn(" — ", lines[0])
         self.assertIn(" | .mtk/now.md: ", lines[0])
-        self.assertEqual(lines[-1], "memcheck: 1 wrong, 1 old, 1 ok")
+        self.assertEqual(lines[-1], "memcheck: 0 wrong, 1 not found, 1 old, 1 ok")
 
     def test_same_fact_twice_is_reported_once(self):
         self.draft("`src/nope.py` again `src/nope.py`\nand `src/nope.py`\n")
         out = self.run_check()
-        self.assertEqual(sum(l.startswith("WRONG path src/nope.py ") for l in out.splitlines()), 1, out)
+        self.assertEqual(sum(l.startswith("NOT FOUND path src/nope.py ") for l in out.splitlines()), 1, out)
 
     # -- always exit 0, limits ----------------------------------------------
     def test_not_a_git_repo(self):
@@ -194,7 +220,7 @@ class MemcheckTest(HookCase):
         self.assertLessEqual(len(out), 4000, len(out))
         self.assertLess(self.elapsed, 1.0)
         self.assertRegex(out, r"\.\.\. \d+ more")
-        self.assertRegex(out.splitlines()[-1], r"^memcheck: 900 wrong, 0 old, 0 ok$")
+        self.assertRegex(out.splitlines()[-1], r"^memcheck: 300 wrong, 600 not found, 0 old, 0 ok$")
 
     def test_normal_run_is_fast(self):
         self.draft("`src/a.py` mtk/real step 2 " + self.good[:8] + "\n")

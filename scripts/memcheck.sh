@@ -8,12 +8,13 @@
 #
 # Four kinds of fact are checked:
 #   hash    7-40 hex characters with a digit   OK if the commit exists, else WRONG
-#   branch  mtk/*                              OK if it exists, OLD if only in git history, else WRONG
-#   path    a repo file or folder              OK if it exists, OLD if only in git history, else WRONG
+#   branch  mtk/*                              OK if it exists, OLD if only in git history, else NOT FOUND
+#   path    a repo file or folder              OK if it exists, OLD if only in git history, else NOT FOUND
 #   plan    "step 19", "steps 2-4", "[19]"     OK if plan.json has that id, else WRONG
 #
 # Output, one line per fact:  <LABEL> <kind> <token> — <reason> | <file>: <line start>
-# WRONG first, then OLD, then OK. At most 4000 characters. It always exits 0.
+# Only hash and plan facts can be WRONG. NOT FOUND means: git cannot tell, the reader must judge.
+# Order: WRONG, NOT FOUND, OLD, OK. At most 4000 characters. It always exits 0.
 
 command -v python3 >/dev/null 2>&1 || { echo "memcheck: python3 not found"; exit 0; }
 
@@ -109,6 +110,8 @@ def main():
     SPLIT = re.compile(r"""[\s()\[\]{}"',;|]+""")
     EXT = re.compile(r"\.[A-Za-z0-9]{1,5}$")
     VERSION = re.compile(r"^v?\d+(\.\d+)+$")
+    ONLY_EXT = re.compile(r"^\.[A-Za-z0-9]{1,5}$")
+    KNOWN_EXT = set("md json py sh ts js tsx jsx yml yaml toml txt csv html css".split())
 
     def path_candidate(tok, backticked):
         tok = tok.strip()
@@ -116,20 +119,26 @@ def main():
         tok = tok.rstrip(".,:;!?")
         if tok.startswith("./"):
             tok = tok[2:]
-        if not tok or " " in tok:
-            return None
-        if not ("/" in tok or EXT.search(tok)):
+        if not tok or " " in tok or any(c in tok for c in "[]()"):
             return None
         if tok[0] in "~/$" or any(c in tok for c in ("<", "*")) or "://" in tok:
             return None
-        if tok.startswith("mtk/") or VERSION.match(tok) or tok.isdigit():
+        if tok.startswith("mtk/") or VERSION.match(tok) or tok.isdigit() or ONLY_EXT.match(tok):
             return None
+        if "/" in tok:
+            # a path only if it has a file extension, or its first folder is real
+            first = tok.split("/")[0]
+            if not (EXT.search(tok) or os.path.exists(os.path.join(root, first))):
+                return None
+        else:
+            # a bare name only if it is in backticks and has a known file extension
+            m = EXT.search(tok)
+            if not (backticked and m and m.group(0)[1:].lower() in KNOWN_EXT):
+                return None
         tok = tok.rstrip("/")
-        if not tok:
-            return None
-        return tok, (backticked or "/" in tok)      # (path, may it be WRONG?)
+        return tok or None
 
-    path_seen = {}  # path -> (file, line, may_be_wrong)
+    path_seen = {}  # path -> (file, line)
 
     for file, line in lines:
         for m in HASH.finditer(line):
@@ -149,14 +158,9 @@ def main():
         rest = TICKS.sub(" ", line)
         spans += [(t, False) for t in SPLIT.split(rest) if t]
         for tok, ticked in spans:
-            c = path_candidate(tok, ticked)
-            if c:
-                p, may_be_wrong = c
-                old = path_seen.get(p)
-                if old is None:
-                    path_seen[p] = (file, line, may_be_wrong)
-                elif may_be_wrong and not old[2]:
-                    path_seen[p] = (file, line, True)
+            p = path_candidate(tok, ticked)
+            if p:
+                path_seen.setdefault(p, (file, line))
 
     # -- check them, batching the git calls ---------------------------------
     results = {}   # (kind, token) -> (label, reason)
@@ -191,7 +195,7 @@ def main():
             elif b in history:
                 results[("branch", b)] = ("OLD", "only in git history, branch is gone")
             else:
-                results[("branch", b)] = ("WRONG", "no such branch, no trace in git")
+                results[("branch", b)] = ("NOT FOUND", "no branch, no trace in git — agent must judge")
 
     gone = [p for p in path_seen if not os.path.exists(os.path.join(root, p))]
     names = set()
@@ -203,17 +207,14 @@ def main():
                 while "/" in n:
                     n = n.rsplit("/", 1)[0]
                     names.add(n)
-    for p, (file, line, may_be_wrong) in path_seen.items():
+    for p, (file, line) in path_seen.items():
         if os.path.exists(os.path.join(root, p)):
             results[("path", p)] = ("OK", "exists")
         elif p in names:
             results[("path", p)] = ("OLD", "only in git history, not on disk now")
-        elif may_be_wrong:
-            results[("path", p)] = ("WRONG", "not on disk, no trace in git")
-        # a bare word that is not found is skipped, not WRONG
-    for p, (file, line, _) in path_seen.items():
-        if ("path", p) in results:
-            facts.setdefault(("path", p), (file, line))
+        else:
+            results[("path", p)] = ("NOT FOUND", "not on disk, no trace in git — agent must judge")
+        facts.setdefault(("path", p), (file, line))
 
     plan_ids = None
     try:
@@ -231,7 +232,7 @@ def main():
 
     # -- print --------------------------------------------------------------
     rows = []
-    for order, label in enumerate(("WRONG", "OLD", "OK")):
+    for label in ("WRONG", "NOT FOUND", "OLD", "OK"):
         for key, (lab, reason) in results.items():
             if lab != label:
                 continue
@@ -246,8 +247,8 @@ def main():
         print("memcheck: no facts to check")
         return
 
-    counts = {l: sum(1 for r in results.values() if r[0] == l) for l in ("WRONG", "OLD", "OK")}
-    summary = f"memcheck: {counts['WRONG']} wrong, {counts['OLD']} old, {counts['OK']} ok"
+    counts = {l: sum(1 for r in results.values() if r[0] == l) for l in ("WRONG", "NOT FOUND", "OLD", "OK")}
+    summary = f"memcheck: {counts['WRONG']} wrong, {counts['NOT FOUND']} not found, {counts['OLD']} old, {counts['OK']} ok"
     room = CAP - len(summary) - 1 - 24            # keep space for the "... N more" line
     shown, used = [], 0
     for r in rows:

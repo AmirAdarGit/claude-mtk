@@ -37,7 +37,7 @@ PAYLOAD=$(cat)
 # Wired in hooks/hooks.json for every Bash call, but it counts only the calls of
 # mtk's agents (hook input "agent_type"), never your own commands. Until 0.3.5 it
 # was wired in the agents' frontmatter, where Claude Code never ran it.
-AGENTS="${MTK_STRIKE_AGENTS:-mtk:tdd-implementer mtk:quality-reviewer mtk:adversarial-verifier}"
+AGENTS="${MTK_STRIKE_AGENTS:-mtk:tdd-implementer mtk:quality-reviewer mtk:adversarial-verifier mtk:memory-checker}"
 hit=0
 for a in $AGENTS; do
   case "$PAYLOAD" in *"$a"*) hit=1 ;; esac

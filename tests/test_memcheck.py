@@ -91,6 +91,11 @@ class MemcheckTest(HookCase):
         out = self.run_check()
         self.assertIn("no facts to check", out)
 
+    def test_uuid_tails_with_letters_are_not_hashes(self):
+        self.draft("session b0895d4d-17bc-4726-b660-9b47d9c4b042 and 123e4567-e89b-12d3-a456-4266141740ab.\n")
+        out = self.run_check()
+        self.assertIn("no facts to check", out)
+
     def test_a_40_char_hash_and_a_7_char_hash_are_checked(self):
         self.draft(f"Full {self.good}, short {self.short()[:7]}, fake abcdef1.\n")
         out = self.run_check()
@@ -339,6 +344,8 @@ class HandoffCommandTest(unittest.TestCase):
         with open(os.path.join(ROOT, "agents", "memory-checker.md")) as f:
             agent = f.read()
         self.assertIn("fact from another repo", agent)
+        self.assertIn("a repo or project other than the one at ROOT", agent)
+        self.assertNotIn('("mtk", "Dev Brain"', agent)
         self.assertIn("never `OK` and never removed", agent)
         self.assertIn("it is a step of something else", agent)
         self.assertIn("this project's plan step, it is `WRONG`", agent)

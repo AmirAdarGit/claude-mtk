@@ -59,7 +59,7 @@ Run every command as `git -C "$ROOT" ...` or `cd "$ROOT" && ...`.
 
 4. **Use the script output like this:**
    - The script says `WRONG`: the line is `WRONG`. One exception: the line clearly names
-     another repo or project for that hash or plan step ("mtk", "Dev Brain", another path).
+     a repo or project other than the one at ROOT for that hash or plan step.
      Then label it `CANNOT CHECK` with the reason "fact from another repo".
      It is never `OK` and never removed.
    - The script says `NOT FOUND`: you judge, from the line.

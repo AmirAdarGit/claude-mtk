@@ -106,7 +106,7 @@ def main():
 
     # A git hash: 7-12 or exactly 40 hex characters, with a digit AND a letter a-f. That drops
     # dates, ports, timestamps, ObjectIds (24) and MD5 (32), and `abc1234:latest`, `abc1234-dirty`.
-    HASH = re.compile(r"(?<![\w/#:])[0-9a-f]{7,40}(?![\w/:-]|\.\w)")
+    HASH = re.compile(r"(?<![\w/#:-])[0-9a-f]{7,40}(?![\w/:-]|\.\w)")
     BRANCH = re.compile(r"(?<![\w/.-])mtk/[A-Za-z0-9._-]+(?![A-Za-z0-9._/-])")
     PLAN_STEP = re.compile(r"\bplan\s+steps?\s+#?(\d+)(?:\s*[-–]\s*(\d+))?", re.I)
     STEP = re.compile(r"\bsteps?\s+#?(\d+)(?:\s*[-–]\s*(\d+))?", re.I)

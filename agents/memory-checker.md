@@ -16,7 +16,8 @@ initialPrompt: Check every added line of the draft .mtk/ memory against git. Lab
 Check the draft memory lines against git and the files. Say which lines are true.
 Claude often writes wrong facts in memory. You are the check.
 
-**Input:** the main folder path, `ROOT`. If you were not given it, find it:
+**Input:** the main folder path `ROOT`, and the path of `memcheck.sh`. Both come in the brief.
+If the brief has no `ROOT`, find it:
 
 ```bash
 ROOT=$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)")
@@ -27,12 +28,14 @@ Run every command as `git -C "$ROOT" ...` or `cd "$ROOT" && ...`.
 ## Method
 
 1. **Run the script.** It checks hashes, `mtk/*` branches, repo paths and plan step ids.
-   Find the plugin folder first. Use `${CLAUDE_PLUGIN_ROOT}` if it is set.
-   If not, it is the folder above this agent file: `<agent file folder>/..`.
+   Use the script path from the brief. If the brief has none, try `${CLAUDE_PLUGIN_ROOT}/scripts/memcheck.sh`.
 
    ```bash
-   sh "<plugin folder>/scripts/memcheck.sh" --dir "$ROOT"
+   sh "<script path>" --dir "$ROOT"
    ```
+
+   If neither path works, skip this step. Write "memcheck.sh not found" in the report,
+   end with `STATUS: DONE_WITH_CONCERNS`, and do all the checks by hand.
 
 2. **Read every added draft line:**
 

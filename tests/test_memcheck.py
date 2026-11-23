@@ -238,6 +238,26 @@ class HandoffCommandTest(unittest.TestCase):
         self.assertIn("mtk:memory-checker", self.text)
         self.assertLess(self.text.index("mtk:memory-checker"), self.text.index("AskUserQuestion"))
 
+    def test_check_section_passes_the_script_path_literally(self):
+        start = self.text.index("## 3. Check")
+        end = self.text.index("## 4.")
+        self.assertIn("${CLAUDE_PLUGIN_ROOT}/scripts/memcheck.sh", self.text[start:end])
+
+    def test_agent_does_not_guess_its_own_path(self):
+        with open(os.path.join(ROOT, "agents", "memory-checker.md")) as f:
+            agent = f.read()
+        self.assertNotIn("agent file folder", agent)
+        self.assertNotIn("above this agent file", agent)
+        self.assertIn("memcheck.sh not found", agent)
+        self.assertIn("DONE_WITH_CONCERNS", agent)
+
+    def test_hooks_json_names_the_three_read_only_agents(self):
+        with open(os.path.join(ROOT, "hooks", "hooks.json")) as f:
+            desc = json.load(f)["description"]
+        self.assertNotIn("the two reviewers", desc)
+        for name in ("quality-reviewer", "adversarial-verifier", "memory-checker"):
+            self.assertIn(name, desc)
+
     def test_sections_are_numbered_in_order(self):
         heads = re.findall(r"^## (\d+)\. (.+)$", self.text, flags=re.M)
         self.assertEqual([n for n, _ in heads], ["1", "2", "3", "4", "5"])

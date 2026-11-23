@@ -14,6 +14,7 @@ import os
 import re
 import subprocess
 import time
+import unittest
 
 from test_hooks import HookCase, ROOT
 
@@ -226,3 +227,19 @@ class MemcheckTest(HookCase):
         self.draft("`src/a.py` mtk/real step 2 " + self.good[:8] + "\n")
         self.run_check()
         self.assertLess(self.elapsed, 1.0)
+
+
+class HandoffCommandTest(unittest.TestCase):
+    def setUp(self):
+        with open(os.path.join(ROOT, "commands", "handoff.md")) as f:
+            self.text = f.read()
+
+    def test_check_step_comes_before_asking_the_user(self):
+        self.assertIn("mtk:memory-checker", self.text)
+        self.assertLess(self.text.index("mtk:memory-checker"), self.text.index("AskUserQuestion"))
+
+    def test_sections_are_numbered_in_order(self):
+        heads = re.findall(r"^## (\d+)\. (.+)$", self.text, flags=re.M)
+        self.assertEqual([n for n, _ in heads], ["1", "2", "3", "4", "5"])
+        self.assertTrue(heads[2][1].startswith("Check"), heads)
+        self.assertTrue(heads[3][1].startswith("Ask the user"), heads)

@@ -243,3 +243,16 @@ class HandoffCommandTest(unittest.TestCase):
         self.assertEqual([n for n, _ in heads], ["1", "2", "3", "4", "5"])
         self.assertTrue(heads[2][1].startswith("Check"), heads)
         self.assertTrue(heads[3][1].startswith("Ask the user"), heads)
+
+
+class ReleaseFilesTest(unittest.TestCase):
+    def test_version_and_readme(self):
+        with open(os.path.join(ROOT, ".claude-plugin", "plugin.json")) as f:
+            self.assertEqual(json.load(f)["version"], "0.3.12")
+        with open(os.path.join(ROOT, "README.md")) as f:
+            readme = f.read()
+        self.assertIn("agents: tdd-implementer, quality-reviewer, adversarial-verifier, memory-checker", readme)
+        self.assertIn("3 read-only agents (by `agent_type`)", readme)
+        self.assertIn("all 4 agents (by `agent_type`)", readme)
+        self.assertNotIn("2 reviewer agents", readme)
+        self.assertNotIn("all 3 agents", readme)
